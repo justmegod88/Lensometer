@@ -54,7 +54,7 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}.hidden{display:none
     <div class="refbox" id="refBox"><div><b id="refTitle">무안경 기준</b><span id="refState">카메라를 켠 뒤 기준을 잡아 주세요.</span></div><button id="refBtn" class="btn pri" type="button" disabled>기준 잡기</button></div>
 
     <div class="live"><div class="cell"><span>SPH</span><strong id="lSph">—</strong></div><div class="cell"><span>CYL</span><strong id="lCyl">—</strong></div><div class="cell axis"><span>AXIS</span><strong id="lAxis">—</strong></div></div>
-    <div class="meterbar"><i id="mFill"></i></div><div class="meterrow"><span id="mLeft">안정 프레임 0</span><span id="mRight">—</span></div><div class="gridStat" id="gridStat">7×7 국소 분석 대기</div>
+    <div class="meterbar"><i id="mFill"></i></div><div class="meterrow"><span id="mLeft">유효 프레임 0</span><span id="mRight">—</span></div><div class="gridStat" id="gridStat">7×7 국소 분석 대기</div>
     <div class="row"><button id="resetBtn" class="btn" type="button">처음부터</button><button id="saveBtn" class="btn go" type="button" disabled>현재 렌즈 저장</button></div>
   </div>
 
@@ -71,7 +71,7 @@ button{font:inherit;-webkit-tap-highlight-color:transparent}.hidden{display:none
 <div id="tut" class="ov hidden"><div class="modal"><div class="mh"><h2>A4 Lens Meter 사용법</h2><button id="tutX" class="ibtn" type="button">✕</button></div><div class="mb">
   <div class="tutstep"><div class="tutnum">1</div><div class="tutbody"><b>책을 세우고 A4를 바닥에 깔기</b><span>작은 글자가 많은 책·인쇄물을 수직으로 세웁니다. A4는 촬영하지 않고 책과 휴대폰 사이의 실제 거리 자로만 씁니다.</span><div class="tutfig"><svg viewBox="0 0 340 82"><rect x="12" y="13" width="18" height="57" rx="2" fill="none" stroke="#0b568b" stroke-width="2"/><text x="21" y="79" font-size="8" text-anchor="middle" fill="#56758e">책</text><line x1="31" y1="58" x2="309" y2="58" stroke="#79bddd" stroke-width="5"/><text x="170" y="74" font-size="8" text-anchor="middle" fill="#56758e">바닥의 A4</text><rect x="310" y="17" width="12" height="52" rx="3" fill="none" stroke="#0077c8" stroke-width="2"/><circle cx="312" cy="25" r="2" fill="#0077c8"/><text x="316" y="79" font-size="8" text-anchor="middle" fill="#56758e">폰</text></svg></div></div></div>
   <div class="tutstep"><div class="tutnum">2</div><div class="tutbody"><b>1단계 · A4 가로 21.0cm</b><span>책과 카메라 기준점을 A4의 양 끝에 맞춥니다. 안경은 접은 가운데 선인 10.5cm 위치에 렌즈면이 책과 평행하도록 세웁니다. 먼저 안경을 치우고 ‘기준 잡기’를 누른 뒤 OD → OS를 측정합니다.</span></div></div>
-  <div class="tutstep"><div class="tutnum">3</div><div class="tutbody"><b>손으로 들 때는 평행만 신경 쓰기</b><span>안경다리를 바닥에 놓으면 프레임의 경사각이 측정에 섞일 수 있어 권장하지 않습니다. 렌즈면을 책과 최대한 평행하게 들고 잠시 유지하세요. 앱이 여러 프레임을 모아 흔들린 프레임을 제외합니다.</span><div class="tutnote">셔터를 정확히 누를 필요는 없습니다. 안정된 프레임이 연속으로 모이면 자동 저장됩니다.</div></div></div>
+  <div class="tutstep"><div class="tutnum">3</div><div class="tutbody"><b>손으로 들 때는 평행만 신경 쓰기</b><span>안경다리를 바닥에 놓으면 프레임의 경사각이 측정에 섞일 수 있어 권장하지 않습니다. 렌즈면을 책과 최대한 평행하게 들고 잠시 유지하세요. 앱이 여러 프레임을 모아 작은 손떨림은 자동 보정하고, 보정하기 어려운 큰 움직임 프레임만 제외합니다.</span><div class="tutnote">셔터를 정확히 누를 필요는 없습니다. 좋은 프레임이 누적되면 자동 저장됩니다. 잠깐 흔들려도 이전 프레임은 사라지지 않습니다.</div></div></div>
   <div class="tutstep"><div class="tutnum">4</div><div class="tutbody"><b>2단계 · A4 세로 29.7cm</b><span>A4를 긴 변 방향으로 놓아 책↔카메라를 29.7cm로 바꾸고 안경 위치도 가운데 14.85cm로 옮깁니다. 다시 안경 없이 새 기준을 잡은 뒤 OD → OS를 측정합니다.</span></div></div>
   <div class="tutstep"><div class="tutnum">5</div><div class="tutbody"><b>7×7 국소 분석 + 두 거리 융합</b><span>각 프레임에서 렌즈 내부를 최대 7×7 겹침 영역으로 분석합니다. 반사·글자 부족 영역은 버리고 안정적인 영역만 사용합니다. 두 거리의 결과는 power-vector로 융합하고 차이가 크면 신뢰도를 낮춥니다.</span></div></div>
 </div><div class="tutfoot"><button id="tutSkip" class="btn" type="button">건너뛰기</button><button id="tutGo" class="btn go" type="button">측정 시작</button></div></div></div>
@@ -106,11 +106,11 @@ var S={
 };
 var MIN_LENS_POWER=.25;
 var REF_SAMPLE_TARGET=7;
-var AUTO_SAVE_SAMPLES=8;
-var AUTO_SAVE_MAX_SKEW=.28;
-var AUTO_SAVE_MAX_SPREAD=.40;
-var AUTO_SAVE_MAX_STEP=.40;
-var AUTO_SAVE_MAX_MOTION=4.5;
+var AUTO_SAVE_SAMPLES=6;
+var AUTO_SAVE_MAX_SKEW=.45;
+var AUTO_SAVE_MAX_SPREAD=.62;
+var AUTO_SAVE_MAX_STEP=.70;
+var AUTO_SAVE_MAX_MOTION=22;
 var AUTO_SAVE_SWITCH_DELAY=2200;
 var GRID_N=7;
 var ANALYSIS_W=640;
@@ -144,12 +144,15 @@ function autoSaveState(){
 }
 
 function addAutoSample(vec,skew){
-  if(!isFinite(skew)||skew>AUTO_SAVE_MAX_SKEW){resetAutoSequence();return;}
+  /* 손-held 측정에서는 나쁜 한 프레임 때문에 이전의 좋은 프레임을 지우지 않는다.
+     흔들림/기울기가 큰 현재 프레임만 건너뛰고 최근 유효 프레임을 누적한다. */
+  if(!isFinite(skew)||skew>AUTO_SAVE_MAX_SKEW) return false;
   var prev=S.autoSamples.length?S.autoSamples[S.autoSamples.length-1]:null;
-  if(prev&&vecStep(prev,vec)>AUTO_SAVE_MAX_STEP) S.autoSamples=[];
+  if(prev&&vecStep(prev,vec)>AUTO_SAVE_MAX_STEP) return false;
   vec._skew=skew;
   S.autoSamples.push(vec);
   if(S.autoSamples.length>AUTO_SAVE_SAMPLES) S.autoSamples.shift();
+  return true;
 }
 
 /* ---------- 광학 / A4 거리 지그 ---------- */
@@ -902,8 +905,14 @@ function tick(){
   var r=analyzeFrame(d,W,H);
   if(r.ok){
     S.bad=0;S.last=r;
-    if(r.motionPx>AUTO_SAVE_MAX_MOTION){resetAutoSequence();S.samples=[];renderLive(false);
-      setBanner("휴대폰이 흔들립니다 — 고정한 뒤 잠시 유지해 주세요","warn");return;}
+    /* 렌즈 밖 affine이 카메라 평행이동/작은 흔들림을 보정하므로,
+       가벼운 손떨림은 허용한다. 매우 큰 이동 프레임만 현재 프레임 하나를 건너뛴다. */
+    if(r.motionPx>AUTO_SAVE_MAX_MOTION){
+      cancelAutoSave();
+      renderLive(false);
+      setBanner("움직임이 큽니다 — 좋은 프레임은 유지 중, 잠시만 안정시켜 주세요","warn");
+      return;
+    }
     var measured=matrixToMeasurement(r.A);
     if(r.local&&r.local.count>=6){
       var lr=vecToRx(r.local.vec);
@@ -916,12 +925,20 @@ function tick(){
     if(Date.now()<S.autoSaveCooldownUntil){resetAutoSequence();S.samples=[];renderLive(false);setBanner("다음 렌즈를 원 안에 맞춰 주세요","ok");return;}
     measured.vec._skew=r.skew;measured.vec._localCount=r.local?r.local.count:0;
     measured.vec._localSpread=r.local?r.local.spread:9;measured.vec._motion=r.motionPx;
-    S.samples.push(measured.vec);if(S.samples.length>80)S.samples.shift();addAutoSample(measured.vec,r.skew);
+    /* 전체 통계에는 유효 프레임을 계속 쌓되, 자동 저장용 최근 표본은
+       이전 값과 너무 다른 순간 프레임을 조용히 제외한다. */
+    var accepted=addAutoSample(measured.vec,r.skew);
+    if(accepted){
+      S.samples.push(measured.vec);if(S.samples.length>80)S.samples.shift();
+    }
   }else{
-    resetAutoSequence();S.bad=(S.bad||0)+1;
-    if((r.why==="noDotsIn"||r.why==="noDotsOut")&&S.bad>=2)requestAutoFocus(true);
-    if(S.bad>25&&S.samples.length)S.samples=[];
-    setBanner(r.message||WHY[r.why]||"정렬 중…","bad");
+    /* 한두 프레임의 추적 실패는 손떨림에서 흔하므로 기존 좋은 표본을 유지한다.
+       연속 실패가 길어질 때만 자동초점/재정렬을 유도한다. */
+    cancelAutoSave();
+    S.bad=(S.bad||0)+1;
+    if((r.why==="noDotsIn"||r.why==="noDotsOut")&&S.bad>=4)requestAutoFocus(true);
+    if(S.bad>50){S.autoSamples=[]; if(S.samples.length>30)S.samples=S.samples.slice(-30);}
+    setBanner(r.message||WHY[r.why]||"정렬 중…","warn");
   }
   renderLive(r.ok);
 }
@@ -932,7 +949,7 @@ function setBanner(msg,cls){
 
 function renderLive(gotOne){
   var n=S.samples.length;
-  $("mLeft").textContent="안정 프레임 "+n; if($("gridStat")){var lc=S.last&&S.last.local?S.last.local.count:0;$("gridStat").textContent="7×7 국소 분석 "+lc+"개 영역";}
+  $("mLeft").textContent="유효 프레임 "+n; if($("gridStat")){var lc=S.last&&S.last.local?S.last.local.count:0;$("gridStat").textContent="7×7 국소 분석 "+lc+"개 영역";}
   var agg=robustVec(S.samples);
   if(!agg||n<2){
     cancelAutoSave();
@@ -976,7 +993,7 @@ function renderLive(gotOne){
   var auto=autoSaveState();
   var tiltMsg="";
   if(S.last&&S.last.local&&S.last.local.spread>.45) tiltMsg=" · 국소 차이 큼";
-  if(S.last&&S.last.motionPx>2.5) tiltMsg+=" · 미세 흔들림";
+  if(S.last&&S.last.motionPx>5) tiltMsg+=" · 흔들림 보정 중";
   var canAuto=gotOne===true&&S.stream&&S.reference&&!S.refMode&&
     Date.now()>=S.autoSaveCooldownUntil;
   if(auto.ready&&canAuto){
@@ -998,9 +1015,9 @@ function renderLive(gotOne){
     if(n>=5&&agg.spread<.45){
       if(Date.now()<S.autoSaveCooldownUntil)
         setBanner("다음 렌즈를 원 안에 맞춰 주세요","ok");
-      else setBanner("안정됨 — 자동 저장 확인 중 "+auto.count+"/"+AUTO_SAVE_SAMPLES+tiltMsg,"ok");
+      else setBanner("좋은 프레임 수집 중 "+auto.count+"/"+AUTO_SAVE_SAMPLES+tiltMsg,"ok");
     }else if(gotOne){
-      setBanner("자동 저장 확인 중 "+auto.count+"/"+AUTO_SAVE_SAMPLES+" — 그대로 유지"+tiltMsg,"warn");
+      setBanner("좋은 프레임 수집 중 "+auto.count+"/"+AUTO_SAVE_SAMPLES+" — 약간의 흔들림은 자동 보정됩니다"+tiltMsg,"warn");
     }
   }
 }
