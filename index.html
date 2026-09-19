@@ -409,28 +409,37 @@ function hybridMeasurement(globalMeasured,local){
   if(!globalMeasured||!globalMeasured.ok)return globalMeasured;
   var gv=globalMeasured.vec,gr=vecToRx(gv);
   var out={ok:true,vec:{M:gv.M,J0:gv.J0,J45:gv.J45},signal:globalMeasured.signal,
-           localUsed:false,localRejected:false,globalLocalGap:null};
+           localUsed:false,localRejected:false,globalLocalGap:null,axisSource:"global"};
   if(!local||local.count<6||!local.vec||!isFinite(local.spread))return out;
 
   var lv=local.vec,lr=vecToRx(lv);
   var seGap=Math.abs(lv.M-gv.M);
-  var cylGap=Math.abs(Math.abs(lr.cyl)-Math.abs(gr.cyl));
-  var gPower=Math.max(Math.abs(gr.sph),Math.abs(gr.sph+gr.cyl));
-  var lPower=Math.max(Math.abs(lr.sph),Math.abs(lr.sph+lr.cyl));
-  var signConflict=Math.abs(gv.M)>2&&Math.abs(lv.M)>.75&&gv.M*lv.M<0;
-  var collapse=gPower>=5.5&&lPower<Math.max(1.25,gPower*.35);
-  var seLimit=Math.max(.85,.55+Math.abs(gv.M)*.10);
-  var unreliable=local.spread>.95||seGap>seLimit||cylGap>1.75||signConflict||collapse;
+  var gMag=Math.hypot(gv.J0,gv.J45), lMag=Math.hypot(lv.J0,lv.J45);
+  var gCyl=2*gMag, lCyl=2*lMag;
+  var cylGap=Math.abs(lCyl-gCyl);
   out.globalLocalGap=seGap;
-  if(unreliable){out.localRejected=true;return out;}
 
-  /* SE는 global을 그대로 유지. local은 난시 벡터(J0/J45)만 제한적으로 보조한다. */
-  var support=Math.max(0,Math.min(1,(local.count-5)/10));
-  var spreadQ=Math.max(0,Math.min(1,1-local.spread/.95));
-  var alpha=Math.min(.55,.18+.37*support*spreadQ);
-  out.vec.J0=gv.J0*(1-alpha)+lv.J0*alpha;
-  out.vec.J45=gv.J45*(1-alpha)+lv.J45*alpha;
-  out.localUsed=true;
+  /* SPH/SE와 AXIS를 분리한다.
+     고도수에서 local M이 0D 부근으로 무너져도, local 내부에서 난시 방향이
+     충분히 일치하면 그 방향 정보는 살린다. */
+  var coherence=isFinite(local.axisCoherence)?local.axisCoherence:0;
+  var axisCount=local.axisCount||0;
+  var axisReliable=local.spread<=1.10 && axisCount>=4 && coherence>=.58 && lCyl>=.30;
+  if(!axisReliable){out.localRejected=true;return out;}
+
+  /* M(구면등가)은 global 100% 유지.
+     CYL 크기는 global을 안전망으로 두고 local을 우선 반영,
+     AXIS 방향은 local의 J 방향을 그대로 사용한다. */
+  var magBlend;
+  if(cylGap<=.75) magBlend=gMag*.25+lMag*.75;
+  else if(cylGap<=1.50) magBlend=gMag*.50+lMag*.50;
+  else magBlend=gMag*.75+lMag*.25;
+  if(lMag>1e-8){
+    out.vec.J0=(lv.J0/lMag)*magBlend;
+    out.vec.J45=(lv.J45/lMag)*magBlend;
+    out.localUsed=true;
+    out.axisSource="local";
+  }
   var rr=vecToRx(out.vec);
   out.signal=Math.max(Math.abs(rr.sph),Math.abs(rr.sph+rr.cyl));
   return out;
@@ -726,7 +735,17 @@ function localLensField(inPairs,inside,C,W,H){
   }
   if(vecs.length<6)return null;
   var agg=robustVec(vecs);if(!agg)return null;
-  return {vec:agg.vec,spread:agg.spread,count:agg.n,nodes:nodes};
+  /* J0/J45는 doubled-angle 좌표라 정규화 방향의 평균 길이로 축 일치도를 구할 수 있다. */
+  var sx=0,sy=0,sw=0,axisCount=0;
+  vecs.forEach(function(v){
+    var jm=Math.hypot(v.J0,v.J45);
+    if(jm<.15)return;
+    var w=Math.min(1.5,jm);
+    sx+=v.J0/jm*w;sy+=v.J45/jm*w;sw+=w;axisCount++;
+  });
+  var axisCoherence=sw>0?Math.hypot(sx,sy)/sw:0;
+  return {vec:agg.vec,spread:agg.spread,count:agg.n,nodes:nodes,
+          axisCoherence:axisCoherence,axisCount:axisCount};
 }
 
 /* 기준 영상의 특징점을 현재 프레임에서 추적한다.
@@ -955,7 +974,10 @@ function tick(){
     S.noLens=0;
     if(Date.now()<S.autoSaveCooldownUntil){resetAutoSequence();S.samples=[];renderLive(false);setBanner("다음 렌즈를 원 안에 맞춰 주세요","ok");return;}
     measured.vec._skew=r.skew;measured.vec._localCount=r.local?r.local.count:0;
-    measured.vec._localSpread=r.local?r.local.spread:9;measured.vec._motion=r.motionPx;
+    measured.vec._localSpread=r.local?r.local.spread:9;
+    measured.vec._axisCoherence=r.local&&isFinite(r.local.axisCoherence)?r.local.axisCoherence:0;
+    measured.vec._axisCount=r.local?r.local.axisCount||0:0;
+    measured.vec._motion=r.motionPx;
     measured.vec._localUsed=!!measured.localUsed;
     measured.vec._localRejected=!!measured.localRejected;
     measured.vec._globalLocalGap=isFinite(measured.globalLocalGap)?measured.globalLocalGap:0;
@@ -1058,8 +1080,12 @@ function renderLive(gotOne){
 
 /* ---------- 두 거리 저장 / 융합 결과 ---------- */
 function qualityFromAgg(agg,source){
-  var local=source.map(function(v){return v._localCount||0;}),ls=source.map(function(v){return isFinite(v._localSpread)?v._localSpread:9;});
-  return {spread:agg.spread,n:agg.n,localCount:median(local)||0,localSpread:median(ls)||9};
+  var local=source.map(function(v){return v._localCount||0;}),
+      ls=source.map(function(v){return isFinite(v._localSpread)?v._localSpread:9;}),
+      ac=source.map(function(v){return isFinite(v._axisCoherence)?v._axisCoherence:0;}),
+      an=source.map(function(v){return v._axisCount||0;});
+  return {spread:agg.spread,n:agg.n,localCount:median(local)||0,localSpread:median(ls)||9,
+          axisCoherence:median(ac)||0,axisCount:median(an)||0};
 }
 function distanceWeight(q){
   if(!q)return 1;
@@ -1105,7 +1131,22 @@ function combineDistances(eye){
   var vec;
   if(used==="21")vec={M:a.M,J0:a.J0,J45:a.J45};
   else if(used==="29.7")vec={M:b.M,J0:b.J0,J45:b.J45};
-  else vec={M:(a.M*wa+b.M*wb)/(wa+wb),J0:(a.J0*wa+b.J0*wb)/(wa+wb),J45:(a.J45*wa+b.J45*wb)/(wa+wb)};
+  else {
+    var fusedM=(a.M*wa+b.M*wb)/(wa+wb);
+    var ra=vecToRx(a),rb=vecToRx(b);
+    var da=Math.abs(ra.axis-rb.axis);da=Math.min(da,180-da);
+    var ca=qa&&isFinite(qa.axisCoherence)?qa.axisCoherence:0;
+    var cb=qb&&isFinite(qb.axisCoherence)?qb.axisCoherence:0;
+    var scoreA=ca*(1+(qa?qa.localCount:0)/20)/(0.25+(qa?qa.localSpread:1));
+    var scoreB=cb*(1+(qb?qb.localCount:0)/20)/(0.25+(qb?qb.localSpread:1));
+    if(highPower>=6)scoreA*=1.20;
+    if(Math.abs(ra.cyl)>=.35&&Math.abs(rb.cyl)>=.35&&da>16){
+      var src=scoreA>=scoreB?a:b;
+      vec={M:fusedM,J0:src.J0,J45:src.J45};
+    }else{
+      vec={M:fusedM,J0:(a.J0*wa+b.J0*wb)/(wa+wb),J45:(a.J45*wa+b.J45*wb)/(wa+wb)};
+    }
+  }
   return {vec:vec,gap:vecStep(a,b),powerGap:powerGap,qa:qa,qb:qb,used:used,outlier:outlier,highPower:highPower,catastrophic:catastrophic};
 }
 function confidenceOf(m){
