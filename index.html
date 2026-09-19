@@ -1,0 +1,1143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#061b3a">
+<title>ACUVUE Lens Meter</title>
+<style>
+:root{
+  --navy:#061b3a;--navy2:#0b2d5c;--blue:#0077c8;--sky:#35b7e9;--cyan:#8ee6ff;
+  --white:#fff;--ink:#11263f;--muted:#667d98;--line:#d8e5f1;--soft:#f4f9fd;
+  --mint:#16b891;--amber:#f4a340;--red:#e85e6a;--r:22px;--shadow:0 14px 38px rgba(1,48,94,.13)
+}
+*{box-sizing:border-box}html,body{margin:0;background:#eef6fb;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans KR",sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+button{font:inherit;-webkit-tap-highlight-color:transparent}.hidden{display:none!important}
+.wrap{width:min(640px,100%);margin:0 auto;padding:0 14px max(34px,env(safe-area-inset-bottom))}
+.hero{margin:0 -14px 14px;padding:max(16px,env(safe-area-inset-top)) 18px 18px;background:linear-gradient(145deg,#061b3a 0%,#073b75 56%,#0086c9 100%);color:#fff;border-radius:0 0 30px 30px;box-shadow:0 14px 32px rgba(1,39,79,.2);position:relative;overflow:hidden}
+.hero:after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;right:-85px;top:-100px;border:32px solid rgba(255,255,255,.08)}
+.heroTop{display:flex;align-items:center;justify-content:space-between;gap:12px;position:relative;z-index:1}.brand{font-size:.72rem;font-weight:850;letter-spacing:.13em;color:#bfeeff}.brand sup{font-size:.55em}.hero h1{font-size:1.55rem;margin:0;letter-spacing:-.04em}.ibtn{width:42px;height:42px;border-radius:13px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.11);color:#fff;display:grid;place-items:center;font-weight:900;cursor:pointer;backdrop-filter:blur(8px)}
+.progress{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:17px;position:relative;z-index:1}.stagePill{padding:10px 11px;border-radius:14px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);color:#bcd5eb;font-size:.74rem}.stagePill b{display:block;color:#fff;font-size:.88rem;margin-top:1px}.stagePill.active{background:#fff;color:#48708f}.stagePill.active b{color:#073b75}.stagePill.done:before{content:"✓ ";color:#64efc6;font-weight:900}
+.card{background:#fff;border:1px solid rgba(7,74,132,.1);border-radius:var(--r);box-shadow:var(--shadow);padding:14px;margin-bottom:12px}.setup{display:flex;align-items:center;gap:12px;padding:13px 14px}.setupIcon{width:46px;height:46px;border-radius:15px;background:linear-gradient(145deg,#eaf7ff,#d7effc);display:grid;place-items:center;font-size:1.35rem;flex:0 0 auto}.setup b{display:block;color:#083d73}.setup span{display:block;color:var(--muted);font-size:.78rem;margin-top:2px}
+.eye-guide{padding:12px 14px;margin-bottom:10px;border-radius:15px;background:#eaf6fd;border:1px solid #cce8f8;text-align:center;font-weight:800;color:#416c8c;font-size:.86rem}.eye-guide b{color:#073b75}.eye-guide.done{background:#e8fbf5;border-color:#b8eedf;color:#177e66}.miniStep{display:inline-block;margin-right:6px;padding:3px 7px;border-radius:999px;background:#fff;color:#0077c8;font-size:.68rem;border:1px solid #c9e5f6}
+.stage{position:relative;aspect-ratio:1/1.04;overflow:hidden;border-radius:19px;background:#04111f;border:1px solid rgba(0,119,200,.16)}.stage video,.stage canvas.view{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#04111f}.empty{position:absolute;inset:0;display:grid;place-items:center;padding:28px;text-align:center;color:#9fbad0;font-size:.86rem}.empty b{display:block;color:#fff;font-size:1rem;margin-bottom:5px}.guide{position:absolute;inset:0;pointer-events:none}.guide svg{width:100%;height:100%}.banner{position:absolute;left:9px;right:9px;bottom:9px;padding:10px 12px;border-radius:13px;background:rgba(3,24,48,.88);color:#fff;border:1px solid rgba(255,255,255,.14);font-size:.79rem;font-weight:800;text-align:center;backdrop-filter:blur(8px)}.banner.warn{color:#ffe2af}.banner.bad{color:#ffc0c6}.banner.ok{color:#b9ffe8}.banner.stage2{background:rgba(0,94,157,.92);color:#fff}
+.refbox{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:11px;padding:11px;border-radius:15px;background:#f3f9fd;border:1px solid #dbeaf4}.refbox.ready{background:#edf9f5;border-color:#c4ebdd}.refbox b{display:block;color:#0b4e83;font-size:.84rem}.refbox span{display:block;color:var(--muted);font-size:.72rem;margin-top:2px}.btn{min-height:50px;border:1px solid #d0e2ee;border-radius:14px;background:#f5f9fc;color:#16486f;font-weight:820;padding:10px 14px;cursor:pointer}.btn.pri,.btn.go{background:linear-gradient(135deg,#0077c8,#00a4d9);border-color:transparent;color:#fff;box-shadow:0 8px 18px rgba(0,119,200,.22)}.btn:disabled{opacity:.42;cursor:not-allowed}.refbox .btn{width:auto;min-height:44px;white-space:nowrap}.live{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}.cell{background:linear-gradient(180deg,#f8fbfe,#edf6fb);border:1px solid #dceaf3;border-radius:15px;text-align:center;padding:9px 7px}.cell span{display:block;color:#7d92a8;font-size:.67rem}.cell strong{display:block;color:#0a3f72;font-size:1.35rem;letter-spacing:-.04em;font-variant-numeric:tabular-nums}.cell.axis strong{color:#0077c8}.meterbar{height:7px;background:#e5eff6;border-radius:999px;overflow:hidden;margin-top:11px}.meterbar i{display:block;height:100%;width:0;background:linear-gradient(90deg,#46cbe9,#00a37a);transition:width .25s}.meterrow{display:flex;justify-content:space-between;gap:8px;margin-top:6px;color:#7b90a6;font-size:.72rem}.gridStat{margin-top:6px;text-align:center;color:#5d7992;font-size:.7rem}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:11px}
+.sectionTitle{display:flex;align-items:end;justify-content:space-between;gap:10px;margin:2px 2px 10px}.sectionTitle h2{margin:0;font-size:1.02rem;color:#073b75}.sectionTitle span{font-size:.72rem;color:var(--muted)}.rxtable{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums}.rxtable th,.rxtable td{padding:11px 5px;text-align:center;border-bottom:1px solid #e5eef5}.rxtable th{color:#7e92a6;font-size:.7rem}.rxtable td{font-weight:850;color:#143e61}.rxtable td.eye{font-size:.78rem;color:#607f98}.rxtable tr:last-child td{border-bottom:0}.pending{color:#a9b7c3!important;font-weight:600!important}.hint{color:#71869c;font-size:.75rem;margin:9px 0 0}.conf-ok{color:#16866c}.conf-warn{color:#aa7018}.conf-bad{color:#c84f5a}.distanceChecks{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}.distanceChecks>div{padding:10px;border-radius:13px;background:#f5f9fc;border:1px solid #e0ebf3}.distanceChecks span{display:block;font-size:.67rem;color:#0077c8;font-weight:850;margin-bottom:4px}.distanceChecks b{display:block;font-size:.7rem;color:#466783;font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.disc{display:flex;gap:9px;padding:11px 12px;margin-top:11px;border-radius:13px;background:#fff8ed;border:1px solid #f3dfbd;color:#8a6023;font-size:.74rem}
+.ov{position:fixed;inset:0;z-index:70;display:grid;place-items:center;padding:16px;background:rgba(2,18,38,.72);backdrop-filter:blur(8px)}.modal{width:min(560px,100%);max-height:88vh;overflow:auto;background:#fff;border-radius:24px;box-shadow:0 26px 70px rgba(0,24,58,.28)}.mh{position:sticky;top:0;z-index:2;display:flex;align-items:center;justify-content:space-between;padding:15px 16px;background:#fff;border-bottom:1px solid #e5eef5}.mh h2{margin:0;color:#073b75;font-size:1.02rem}.mh .ibtn{background:#eef6fb;border-color:#d9e8f2;color:#0b568b}.mb{padding:8px 16px 18px}.tutstep{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid #edf2f6}.tutnum{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(135deg,#0077c8,#35b7e9);color:#fff;font-size:.76rem;font-weight:900;flex:0 0 auto}.tutbody b{display:block;color:#0c4776;font-size:.88rem;margin-bottom:4px}.tutbody span,.mb p,.mb li{color:#526f88;font-size:.8rem;line-height:1.55}.tutfig{margin-top:9px;padding:10px;border-radius:14px;background:#f5fafd;border:1px solid #dfebf4}.tutfig svg{width:100%;height:auto;display:block}.tutnote{padding:10px 12px;margin-top:10px;border-radius:13px;background:#eaf7fd;color:#356985;font-size:.76rem}.tutfoot{position:sticky;bottom:0;display:flex;gap:8px;padding:12px 16px;background:#fff;border-top:1px solid #e5eef5}.tutfoot .btn{flex:1}.mb h3{color:#0b568b;font-size:.86rem;margin:16px 0 7px}.mb ul,.mb ol{padding-left:19px;margin:0}.toast{position:fixed;left:50%;bottom:26px;z-index:90;transform:translate(-50%,14px);max-width:calc(100% - 30px);padding:10px 14px;border-radius:13px;background:#062544;color:#fff;border:1px solid rgba(255,255,255,.18);font-size:.82rem;opacity:0;pointer-events:none;transition:.2s;text-align:center}.toast.on{opacity:1;transform:translate(-50%,0)}
+@media(min-width:700px){.wrap{padding-left:0;padding-right:0}.hero{margin-left:0;margin-right:0;border-radius:0 0 30px 30px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="hero">
+    <div class="heroTop"><div><h1>Lens Meter</h1></div><button id="helpBtn" class="ibtn" type="button" aria-label="사용법">?</button></div>
+    <div class="progress"><div id="stagePill0" class="stagePill active">STEP 1<b>A4 가로 · 21.0cm</b></div><div id="stagePill1" class="stagePill">STEP 2<b>A4 세로 · 29.7cm</b></div></div>
+  </section>
+  <div class="eye-guide" id="eyeGuide"></div>
+
+  <div class="card">
+    <div class="stage" id="stage">
+      <video id="vid" playsinline muted class="hidden"></video>
+      <div class="guide" aria-hidden="true"><svg viewBox="0 29 300 312" preserveAspectRatio="xMidYMid meet">
+        <circle cx="150" cy="185" r="96" fill="none" stroke="#61d8ff" stroke-width="2" stroke-dasharray="7 7" opacity=".88"/>
+        <line x1="56" y1="185" x2="244" y2="185" stroke="#ffffff" stroke-width="1" opacity=".42"/>
+        <line x1="150" y1="91" x2="150" y2="279" stroke="#ffffff" stroke-width="1" opacity=".28"/>
+        <g fill="#8ee6ff" opacity=".34"><circle cx="128" cy="119" r="1.7"/><circle cx="150" cy="119" r="1.7"/><circle cx="172" cy="119" r="1.7"/><circle cx="106" cy="141" r="1.7"/><circle cx="128" cy="141" r="1.7"/><circle cx="150" cy="141" r="1.7"/><circle cx="172" cy="141" r="1.7"/><circle cx="194" cy="141" r="1.7"/><circle cx="84" cy="163" r="1.7"/><circle cx="106" cy="163" r="1.7"/><circle cx="128" cy="163" r="1.7"/><circle cx="150" cy="163" r="1.7"/><circle cx="172" cy="163" r="1.7"/><circle cx="194" cy="163" r="1.7"/><circle cx="216" cy="163" r="1.7"/><circle cx="84" cy="185" r="1.7"/><circle cx="106" cy="185" r="1.7"/><circle cx="128" cy="185" r="1.7"/><circle cx="150" cy="185" r="1.7"/><circle cx="172" cy="185" r="1.7"/><circle cx="194" cy="185" r="1.7"/><circle cx="216" cy="185" r="1.7"/><circle cx="84" cy="207" r="1.7"/><circle cx="106" cy="207" r="1.7"/><circle cx="128" cy="207" r="1.7"/><circle cx="150" cy="207" r="1.7"/><circle cx="172" cy="207" r="1.7"/><circle cx="194" cy="207" r="1.7"/><circle cx="216" cy="207" r="1.7"/><circle cx="106" cy="229" r="1.7"/><circle cx="128" cy="229" r="1.7"/><circle cx="150" cy="229" r="1.7"/><circle cx="172" cy="229" r="1.7"/><circle cx="194" cy="229" r="1.7"/><circle cx="128" cy="251" r="1.7"/><circle cx="150" cy="251" r="1.7"/><circle cx="172" cy="251" r="1.7"/></g>
+        <text x="150" y="78" text-anchor="middle" fill="#dff8ff" font-size="9" font-weight="700" font-family="-apple-system,sans-serif">렌즈면을 책과 평행하게</text>
+      </svg></div>
+      <div class="empty" id="empty"><div><b>글자가 많은 책을 세워 주세요</b>A4는 바닥의 거리 가이드로만 사용합니다.<br>책 자체가 촬영 대상입니다.</div></div>
+      <div class="banner" id="banner">카메라 준비 중…</div>
+    </div>
+
+    <div class="refbox" id="refBox"><div><b id="refTitle">무안경 기준</b><span id="refState">카메라를 켠 뒤 기준을 잡아 주세요.</span></div><button id="refBtn" class="btn pri" type="button" disabled>기준 잡기</button></div>
+
+    <div class="live"><div class="cell"><span>SPH</span><strong id="lSph">—</strong></div><div class="cell"><span>CYL</span><strong id="lCyl">—</strong></div><div class="cell axis"><span>AXIS</span><strong id="lAxis">—</strong></div></div>
+    <div class="meterbar"><i id="mFill"></i></div><div class="meterrow"><span id="mLeft">유효 프레임 0</span><span id="mRight">—</span></div>
+    <div class="row"><button id="resetBtn" class="btn" type="button">처음부터</button><button id="saveBtn" class="btn go" type="button" disabled>현재 렌즈 저장</button></div>
+  </div>
+
+  <div class="card"><div class="sectionTitle"><h2>두 거리 융합 결과</h2><span>0.25D 단위 표시</span></div>
+    <table class="rxtable"><thead><tr><th></th><th>SPH</th><th>CYL</th><th>AXIS</th><th>SE</th></tr></thead><tbody>
+      <tr><td class="eye">우 OD</td><td id="rR_s" class="pending">—</td><td id="rR_c" class="pending">—</td><td id="rR_a" class="pending">—</td><td id="rR_e" class="pending">—</td></tr>
+      <tr><td class="eye">좌 OS</td><td id="rL_s" class="pending">—</td><td id="rL_c" class="pending">—</td><td id="rL_a" class="pending">—</td><td id="rL_e" class="pending">—</td></tr>
+    </tbody></table>
+    <div id="distanceChecks" class="distanceChecks"></div><p class="hint" id="confInfo"></p>
+    <div class="disc"><span>ⓘ</span><span>참고용 추정값입니다. 21cm·29.7cm의 일치도를 이용해 신뢰도를 평가하지만, 렌즈 굴절률·두께·비구면/누진 설계를 완전히 역산하지는 않습니다. 처방·판매 판단은 실제 렌즈미터와 검안으로 확인해 주세요.</span></div>
+  </div>
+</div>
+
+<div id="tut" class="ov hidden"><div class="modal"><div class="mh"><h2>A4 Lens Meter 사용법</h2><button id="tutX" class="ibtn" type="button">✕</button></div><div class="mb">
+  <div class="tutstep"><div class="tutnum">1</div><div class="tutbody"><b>책을 세우고 A4를 바닥에 깔기</b><span>작은 글자가 많은 책·인쇄물을 수직으로 세웁니다. A4는 촬영하지 않고 책과 휴대폰 사이의 실제 거리 자로만 씁니다.</span><div class="tutfig"><svg viewBox="0 0 340 82"><rect x="12" y="13" width="18" height="57" rx="2" fill="none" stroke="#0b568b" stroke-width="2"/><text x="21" y="79" font-size="8" text-anchor="middle" fill="#56758e">책</text><line x1="31" y1="58" x2="309" y2="58" stroke="#79bddd" stroke-width="5"/><text x="170" y="74" font-size="8" text-anchor="middle" fill="#56758e">바닥의 A4</text><rect x="310" y="17" width="12" height="52" rx="3" fill="none" stroke="#0077c8" stroke-width="2"/><circle cx="312" cy="25" r="2" fill="#0077c8"/><text x="316" y="79" font-size="8" text-anchor="middle" fill="#56758e">폰</text></svg></div></div></div>
+  <div class="tutstep"><div class="tutnum">2</div><div class="tutbody"><b>1단계 · A4 가로 21.0cm</b><span>책과 카메라 기준점을 A4의 양 끝에 맞춥니다. 안경은 접은 가운데 선인 10.5cm 위치에 렌즈면이 책과 평행하도록 세웁니다. 먼저 안경을 치우고 ‘기준 잡기’를 누른 뒤 OD → OS를 측정합니다.</span></div></div>
+  <div class="tutstep"><div class="tutnum">3</div><div class="tutbody"><b>손으로 들 때는 평행만 신경 쓰기</b><span>안경다리를 바닥에 놓으면 프레임의 경사각이 측정에 섞일 수 있어 권장하지 않습니다. 렌즈면을 책과 최대한 평행하게 들고 잠시 유지하세요. 앱이 여러 프레임을 모아 작은 손떨림은 자동 보정하고, 보정하기 어려운 큰 움직임 프레임만 제외합니다.</span><div class="tutnote">셔터를 정확히 누를 필요는 없습니다. 좋은 프레임이 누적되면 자동 저장됩니다. 잠깐 흔들려도 이전 프레임은 사라지지 않습니다.</div></div></div>
+  <div class="tutstep"><div class="tutnum">4</div><div class="tutbody"><b>2단계 · A4 세로 29.7cm</b><span>A4를 긴 변 방향으로 놓아 책↔카메라를 29.7cm로 바꾸고 안경 위치도 가운데 14.85cm로 옮깁니다. 다시 안경 없이 새 기준을 잡은 뒤 OD → OS를 측정합니다.</span></div></div>
+  <div class="tutstep"><div class="tutnum">5</div><div class="tutbody"><b>7×7 국소 분석 + 두 거리 융합</b><span>각 프레임에서 렌즈 내부를 최대 7×7 겹침 영역으로 분석합니다. 반사·글자 부족 영역은 버리고 안정적인 영역만 사용합니다. 두 거리의 결과는 power-vector로 융합하고 차이가 크면 신뢰도를 낮춥니다.</span></div></div>
+</div><div class="tutfoot"><button id="tutSkip" class="btn" type="button">건너뛰기</button><button id="tutGo" class="btn go" type="button">측정 시작</button></div></div></div>
+
+<div id="help" class="ov hidden"><div class="modal"><div class="mh"><h2>측정 원리와 주의점</h2><button id="helpClose" class="ibtn" type="button">✕</button></div><div class="mb"><button id="tutOpen" class="btn" type="button" style="width:100%;margin-top:8px">처음 사용법 다시 보기</button>
+<h3>왜 두 거리에서 측정하나요?</h3><p>한 거리의 배율만으로는 실제 안경렌즈의 두께·주평면·설계 차이를 완전히 분리할 수 없습니다. 21cm와 29.7cm에서 각각 기준을 잡아 측정하면 거리 의존 오차를 확인할 수 있고, 두 결과가 잘 맞는 데이터에 더 높은 신뢰도를 줄 수 있습니다.</p>
+<h3>7×7 분석은 촬영 횟수가 아닙니다</h3><p>사용자가 더 많이 찍는 것이 아니라 한 프레임 안의 렌즈 영역을 최대 49개 위치에서 겹치게 분석합니다. 글자 특징이나 반사 상태가 나쁜 영역은 자동 제외됩니다.</p>
+<h3>안경을 왜 세워서 드나요?</h3><p>안경다리를 접어 바닥에 놓으면 프레임 고유의 경사각이 렌즈 기울기로 들어갈 수 있습니다. 뒤집기 평균만으로 이 효과가 항상 사라지는 것은 아니므로, 처음부터 렌즈면을 책과 평행하게 세우는 것이 더 안전합니다.</p>
+<h3>측정 팁</h3><ul><li>작고 불규칙한 글자가 많은 무광 페이지가 좋습니다.</li><li>책·휴대폰은 각 거리의 무안경 기준을 잡은 뒤 움직이지 마세요.</li><li>안경테의 반사광이 강하면 각도를 아주 조금 조정하되 렌즈면의 평행은 유지하세요.</li><li>누진·강한 비구면·프리즘 렌즈는 위치에 따라 결과가 크게 달라질 수 있어 참고값으로만 보세요.</li></ul>
+</div></div></div>
+<div id="toast" class="toast" role="status" aria-live="polite"></div><canvas id="work" class="hidden"></canvas>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id);};
+
+/* ---------- 상태 ---------- */
+var DISTANCES=[
+  {mm:210,lensMM:105,label:"21.0 cm",short:"A4 가로",accent:"1"},
+  {mm:297,lensMM:148.5,label:"29.7 cm",short:"A4 세로",accent:"2"}
+];
+var S={
+  stream:null,timer:null,stage:0,side:"R",
+  samples:[],results:{R:null,L:null},
+  distanceData:[{R:null,L:null},{R:null,L:null}],
+  qualityData:[{R:null,L:null},{R:null,L:null}],
+  references:[null,null],reference:null,
+  motion:null,focusTrack:null,focusModes:[],focusBusy:false,lastFocusRetry:0,
+  refSamples:[],refMode:false,autoSamples:[],autoSaveTimer:null,
+  autoSavePending:false,autoSaveCooldownUntil:0,last:null,bad:0,noLens:0,
+  N:64
+};
+var MIN_LENS_POWER=.25;
+var REF_SAMPLE_TARGET=7;
+var AUTO_SAVE_SAMPLES=6;
+var AUTO_SAVE_MAX_SKEW=.45;
+var AUTO_SAVE_MAX_SPREAD=.62;
+var AUTO_SAVE_MAX_STEP=.70;
+var AUTO_SAVE_MAX_MOTION=22;
+var AUTO_SAVE_SWITCH_DELAY=2200;
+var GRID_N=7;
+var ANALYSIS_W=640;
+var lastD=DISTANCES[0].mm;
+
+function toast(m){var t=$("toast");t.textContent=m;t.classList.add("on");
+  clearTimeout(toast.t);toast.t=setTimeout(function(){t.classList.remove("on");},2200);}
+
+function cancelAutoSave(){
+  if(S.autoSaveTimer){clearTimeout(S.autoSaveTimer);S.autoSaveTimer=null;}
+  S.autoSavePending=false;
+}
+
+function resetAutoSequence(){
+  cancelAutoSave();
+  S.autoSamples=[];
+}
+
+function vecStep(a,b){
+  return Math.abs(a.M-b.M)+Math.abs(a.J0-b.J0)+Math.abs(a.J45-b.J45);
+}
+
+/* 최근 표본부터 거꾸로 확인해 기울기와 값이 연속으로 안정된 횟수를 센다. */
+function autoSaveState(){
+  var count=S.autoSamples.length;
+  var recent=count>=AUTO_SAVE_SAMPLES?S.autoSamples.slice(-AUTO_SAVE_SAMPLES):[];
+  var agg=recent.length?robustVec(recent):null;
+  return {count:count,agg:agg,
+    ready:count>=AUTO_SAVE_SAMPLES&&agg&&agg.spread<AUTO_SAVE_MAX_SPREAD&&
+      recent.every(function(v){return isFinite(v._skew)&&v._skew<=AUTO_SAVE_MAX_SKEW;})};
+}
+
+function addAutoSample(vec,skew){
+  /* 손-held 측정에서는 나쁜 한 프레임 때문에 이전의 좋은 프레임을 지우지 않는다.
+     흔들림/기울기가 큰 현재 프레임만 건너뛰고 최근 유효 프레임을 누적한다. */
+  if(!isFinite(skew)||skew>AUTO_SAVE_MAX_SKEW) return false;
+  var prev=S.autoSamples.length?S.autoSamples[S.autoSamples.length-1]:null;
+  if(prev&&vecStep(prev,vec)>AUTO_SAVE_MAX_STEP) return false;
+  vec._skew=skew;
+  S.autoSamples.push(vec);
+  if(S.autoSamples.length>AUTO_SAVE_SAMPLES) S.autoSamples.shift();
+  return true;
+}
+
+/* ---------- 광학 / A4 거리 지그 ---------- */
+function currentDistance(){return DISTANCES[S.stage];}
+function totalDistance(){return currentDistance().mm;}
+function geom(){
+  var D=currentDistance().mm, a=D/2, b=D/2, e=a*b/(a+b);
+  return {a:a,b:b,e:e,eM:e/1000};
+}
+function syncGeom(){ lastD=currentDistance().mm; renderStageUI(); }
+function renderDistUI(){ renderStageUI(); }
+
+function normAxis(d){var v=d%180; if(v<0)v+=180; return v;}
+function rxToVec(s,c,ax){var a=ax*Math.PI/180;
+  return {M:s+c/2, J0:(-c/2)*Math.cos(2*a), J45:(-c/2)*Math.sin(2*a)};}
+function vecToRx(v){
+  var mag=Math.hypot(v.J0,v.J45), c=-2*mag;
+  var ax=normAxis(.5*Math.atan2(v.J45,v.J0)*180/Math.PI);
+  return {sph:v.M-c/2, cyl:c, axis:ax};
+}
+function q25(x){return Math.round(x*4)/4;}
+function fmtP(x){if(!isFinite(x))return "—";var v=Math.abs(x)<.005?0:x;
+  return (v>=0?"+":"")+v.toFixed(2);}
+
+/* ---------- FFT ---------- */
+function fft(re,im,inv){
+  var n=re.length,i,j=0,k,m;
+  for(i=1;i<n;i++){
+    var bit=n>>1;
+    for(;j&bit;bit>>=1) j^=bit;
+    j^=bit;
+    if(i<j){var tr=re[i];re[i]=re[j];re[j]=tr;var ti=im[i];im[i]=im[j];im[j]=ti;}
+  }
+  for(m=2;m<=n;m<<=1){
+    var ang=(inv?2:-2)*Math.PI/m;
+    var wr=Math.cos(ang), wi=Math.sin(ang);
+    for(i=0;i<n;i+=m){
+      var cr=1,ci=0;
+      for(k=0;k<m/2;k++){
+        var ur=re[i+k], ui=im[i+k];
+        var vr=re[i+k+m/2]*cr-im[i+k+m/2]*ci;
+        var vi=re[i+k+m/2]*ci+im[i+k+m/2]*cr;
+        re[i+k]=ur+vr; im[i+k]=ui+vi;
+        re[i+k+m/2]=ur-vr; im[i+k+m/2]=ui-vi;
+        var ncr=cr*wr-ci*wi; ci=cr*wi+ci*wr; cr=ncr;
+      }
+    }
+  }
+}
+/* 2D 파워 스펙트럼 (N x N, N은 2의 거듭제곱) */
+function powerSpectrum(g,N){
+  var re=new Float64Array(N*N), im=new Float64Array(N*N);
+  var i,x,y;
+  for(i=0;i<N*N;i++) re[i]=g[i];
+  var rr=new Float64Array(N), ri=new Float64Array(N);
+  for(y=0;y<N;y++){
+    for(x=0;x<N;x++){rr[x]=re[y*N+x];ri[x]=im[y*N+x];}
+    fft(rr,ri,false);
+    for(x=0;x<N;x++){re[y*N+x]=rr[x];im[y*N+x]=ri[x];}
+  }
+  for(x=0;x<N;x++){
+    for(y=0;y<N;y++){rr[y]=re[y*N+x];ri[y]=im[y*N+x];}
+    fft(rr,ri,false);
+    for(y=0;y<N;y++){re[y*N+x]=rr[y];im[y*N+x]=ri[y];}
+  }
+  var p=new Float64Array(N*N);
+  for(i=0;i<N*N;i++) p[i]=re[i]*re[i]+im[i]*im[i];
+  return p;
+}
+
+/* ---------- 패치 추출 ---------- */
+/* src 캔버스에서 (cx,cy) 중심, side 픽셀 정사각형을 N x N 그레이로 리샘플 + Hann 창 + DC 제거 */
+function grabPatch(imgData,W,H,cx,cy,side,N){
+  var g=new Float64Array(N*N);
+  var half=side/2, i,x,y, sum=0, cnt=0;
+  for(y=0;y<N;y++){
+    var sy=cy-half+(y+.5)*side/N;
+    var iy=Math.round(sy);
+    if(iy<0||iy>=H) return null;
+    for(x=0;x<N;x++){
+      var sx=cx-half+(x+.5)*side/N;
+      var ix=Math.round(sx);
+      if(ix<0||ix>=W) return null;
+      var o=(iy*W+ix)*4;
+      var lum=(imgData[o]*.299+imgData[o+1]*.587+imgData[o+2]*.114);
+      g[y*N+x]=lum; sum+=lum; cnt++;
+    }
+  }
+  var mean=sum/cnt, varsum=0;
+  for(i=0;i<N*N;i++){var d=g[i]-mean; varsum+=d*d;}
+  var sd=Math.sqrt(varsum/(N*N));
+  if(sd<6) return null;                       /* 대비 없음 = 격자 없음 */
+  /* Hann 2D 창 + 정규화 */
+  for(y=0;y<N;y++){
+    var wy=.5-.5*Math.cos(2*Math.PI*y/(N-1));
+    for(x=0;x<N;x++){
+      var wx=.5-.5*Math.cos(2*Math.PI*x/(N-1));
+      g[y*N+x]=(g[y*N+x]-mean)/sd*wx*wy;
+    }
+  }
+  return g;
+}
+
+/* ---------- 역격자 벡터 2개 찾기 ---------- */
+function reciprocalBasis(power,N,side){
+  var half=N/2, best=[], x,y;
+  var minR=2.5, maxR=half-2;          /* DC 근처·나이퀴스트 근처 제외 */
+  for(y=0;y<N;y++){
+    var fy=(y<=half)?y:y-N;
+    for(x=0;x<N;x++){
+      var fx=(x<=half)?x:x-N;
+      if(fy<0) continue;                       /* 반평면만 (±쌍 중복 제거) */
+      if(fy===0&&fx<=0) continue;
+      var r=Math.hypot(fx,fy);
+      if(r<minR||r>maxR) continue;
+      best.push({fx:fx,fy:fy,p:power[y*N+x]});
+    }
+  }
+  if(best.length<8) return null;
+  best.sort(function(a,b){return b.p-a.p;});
+  var mid=best[Math.floor(best.length*.5)].p||1e-9;
+
+  /* 잡음 기각: 진짜 격자는 중앙값 대비 수천 배, 랜덤 잡음은 ~10배 */
+  if(best[0].p < mid*30) return null;
+
+  function powAt(fx,fy){
+    var ix=((Math.round(fx)%N)+N)%N, iy=((Math.round(fy)%N)+N)%N;
+    return power[iy*N+ix];
+  }
+  /* 고조파 방어: 절반 주파수가 '현재 피크에 필적할 만큼' 강할 때만 환원한다.
+     문턱을 느슨하게 두면 저주파 잡음으로 내려가 배율이 절반으로 잘못 잡힌다. */
+  function primitive(g){
+    var cur=g;
+    for(var s=0;s<2;s++){
+      var hx=cur.fx/2, hy=cur.fy/2;
+      if(Math.hypot(hx,hy)<minR) break;
+      var ph=powAt(hx,hy);
+      if(ph < cur.p*.35) break;
+      cur={fx:hx,fy:hy,p:ph};
+    }
+    return cur;
+  }
+
+  var g1=primitive(best[0]);
+  var a1=Math.atan2(g1.fy,g1.fx), g2=null;
+  for(var i=1;i<best.length;i++){
+    var c=best[i];
+    if(c.p<mid*15) break;
+    var a2=Math.atan2(c.fy,c.fx);
+    var d=Math.abs(a1-a2)%Math.PI; d=Math.min(d,Math.PI-d);
+    if(d>25*Math.PI/180){g2=primitive(c);break;}
+  }
+  if(!g2) return null;
+  var strength=Math.min(g1.p,g2.p)/mid;
+
+  /* 3x3 무게중심으로 서브픽셀 보정 */
+  function refine(pk){
+    var sx=0,sy=0,sw=0;
+    for(var dy=-1;dy<=1;dy++)for(var dx=-1;dx<=1;dx++){
+      var fx=pk.fx+dx, fy=pk.fy+dy;
+      var ix=((fx%N)+N)%N, iy=((fy%N)+N)%N;
+      var w=power[iy*N+ix];
+      sx+=fx*w; sy+=fy*w; sw+=w;
+    }
+    return sw>0?{fx:sx/sw,fy:sy/sw}:{fx:pk.fx,fy:pk.fy};
+  }
+  var r1=refine(g1), r2=refine(g2);
+  /* 역격자 벡터의 ± 부호는 임의라, 안/밖 기저의 방향성(handedness)이 어긋나면
+     A에 반사(reflection)가 섞여 축이 180-θ 로 거울 반전된다.
+     항상 오른손 기저(det>0)로 맞춰 준다. */
+  if(r1.fx*r2.fy - r1.fy*r2.fx < 0){ r2={fx:-r2.fx, fy:-r2.fy}; }
+
+  /* 주: 고조파 최소제곱 격자 정밀화를 시도했으나 A/B 측정 결과
+     CYL 오차가 0.03D -> 0.36D 로 악화되어 제거했다.
+     3x3 무게중심 서브픽셀 추정이 이 조건에서 더 정확하다. */
+  /* 패치 좌표계(cycles/patch) → 원본 픽셀 좌표계(cycles/px)로 정규화.
+     이 정규화를 빼먹으면 안/밖 패치 크기 비율이 그대로 가짜 배율로 들어간다. */
+  var k=1/side;
+  return {g1:{fx:r1.fx*k,fy:r1.fy*k}, g2:{fx:r2.fx*k,fy:r2.fy*k},
+          strength:strength};
+}
+
+/* ---------- 2x2 행렬 유틸 ---------- */
+function inv2(m){var d=m[0]*m[3]-m[1]*m[2];
+  if(Math.abs(d)<1e-12) return null;
+  return [m[3]/d,-m[1]/d,-m[2]/d,m[0]/d];}
+function mul2(a,b){return [a[0]*b[0]+a[1]*b[2], a[0]*b[1]+a[1]*b[3],
+                           a[2]*b[0]+a[3]*b[2], a[2]*b[1]+a[3]*b[3]];}
+function tr2(m){return [m[0],m[2],m[1],m[3]];}
+
+/* 역격자 → 실격자 관계:  G_in = A^-T G_out  ⇒  A = (G_in G_out^-1)^-T */
+function magMatrix(Gin,Gout){
+  var gi=[Gin.g1.fx,Gin.g2.fx,Gin.g1.fy,Gin.g2.fy];
+  var go=[Gout.g1.fx,Gout.g2.fx,Gout.g1.fy,Gout.g2.fy];
+
+  /* 대응 맞추기: 각도가 가까운 것끼리 */
+  function ang(x,y){var a=Math.atan2(y,x)%Math.PI; return a<0?a+Math.PI:a;}
+  function adist(a,b){var d=Math.abs(a-b)%Math.PI; return Math.min(d,Math.PI-d);}
+  var ai1=ang(Gin.g1.fx,Gin.g1.fy), ai2=ang(Gin.g2.fx,Gin.g2.fy);
+  var ao1=ang(Gout.g1.fx,Gout.g1.fy), ao2=ang(Gout.g2.fx,Gout.g2.fy);
+  var keep=adist(ai1,ao1)+adist(ai2,ao2);
+  var swap=adist(ai1,ao2)+adist(ai2,ao1);
+  if(swap<keep){
+    /* 열을 맞바꾸면 행렬식 부호가 뒤집혀 반사가 다시 섞인다.
+       한 열의 부호를 뒤집어 오른손 기저를 유지한다. */
+    go=[Gout.g2.fx,-Gout.g1.fx,Gout.g2.fy,-Gout.g1.fy];
+  }
+
+  var goInv=inv2(go); if(!goInv) return null;
+  var T=mul2(gi,goInv);                 /* = A^-T */
+  var Ti=inv2(T); if(!Ti) return null;
+  return tr2(Ti);                       /* A */
+}
+
+/* A → 주경선 배율 + 축 */
+function principal(A){
+  var c00=A[0]*A[0]+A[2]*A[2];
+  var c01=A[0]*A[1]+A[2]*A[3];
+  var c11=A[1]*A[1]+A[3]*A[3];
+  var tr=c00+c11;
+  var disc=Math.sqrt(Math.max(0,(c00-c11)*(c00-c11)+4*c01*c01));
+  var l1=Math.max(1e-9,(tr+disc)/2), l2=Math.max(1e-9,(tr-disc)/2);
+  var ang=.5*Math.atan2(2*c01,c00-c11);
+  return {m1:Math.sqrt(l1), m2:Math.sqrt(l2), angle:ang};
+}
+
+/* 배율 행렬을 실제 도수 벡터로 변환한다.
+   무안경 기준 행렬을 제거한 뒤에만 호출해야 카메라 왜곡이 도수로 섞이지 않는다. */
+function matrixToMeasurement(A){
+  var prRaw=principal(A);
+  if(prRaw.m1<.35||prRaw.m1>2.6||prRaw.m2<.35||prRaw.m2>2.6)
+    return {ok:false,why:"range"};
+
+  var g=geom();
+  if(g.eM<.03) return {ok:false,why:"tooClose"};
+
+  var pr=prRaw;
+  var F1=(1-1/pr.m1)/g.eM;
+  var F2=(1-1/pr.m2)/g.eM;
+
+  /* AXIS 기준 = 화면(이미지)의 수평. 안경테를 초록선에 맞춘다. */
+  var axisDeg=normAxis(pr.angle*180/Math.PI);
+  var sph=Math.max(F1,F2), cyl=Math.min(F1,F2)-sph;
+  if(F1<F2) axisDeg=normAxis(axisDeg+90);
+
+  return {ok:true,vec:rxToVec(sph,cyl,axisDeg),
+          signal:Math.max(Math.abs(F1),Math.abs(F2))};
+}
+
+
+/* ---------- 한 프레임 분석 ---------- */
+function analyzeFrame(imgData,W,H){
+  var N=S.N;
+  var cx=W*.5, cy=H*.5*(370/400);       /* 가이드 원 중심과 맞춤 */
+  var R=Math.min(W,H)*.24;              /* 가이드 원 반경(대략) */
+
+  /* 렌즈 안 패치 */
+  var inSide=R*1.2;
+  var Pin=grabPatch(imgData,W,H,cx,cy,inSide,N);
+  if(!Pin) return {ok:false,why:"noGrid"};
+  var Gin=reciprocalBasis(powerSpectrum(Pin,N),N,inSide);
+  if(!Gin) return {ok:false,why:"noGridIn"};
+
+  /* 렌즈 밖 8방향을 확인한다. 여러 위치가 잡히면 서로 비슷한 후보를 사용하고,
+     안경테가 가린 경우에는 선명한 한 위치만으로도 측정을 이어 간다. */
+  var outSide=R*.85, off=R*1.55, s=Math.SQRT1_2;
+  var offs=[[0,-1],[0,1],[-1,0],[1,0],[-s,-s],[s,-s],[-s,s],[s,s]];
+  var cands=[];
+  for(var i=0;i<offs.length;i++){
+    var ox=cx+offs[i][0]*off, oy=cy+offs[i][1]*off;
+    var P=grabPatch(imgData,W,H,ox,oy,outSide,N);
+    if(!P) continue;
+    var G=reciprocalBasis(powerSpectrum(P,N),N,outSide);
+    if(!G) continue;
+    var L1=Math.hypot(G.g1.fx,G.g1.fy), L2=Math.hypot(G.g2.fx,G.g2.fy);
+    /* 쉬운 측정 모드: 기울기·촬영 거리 때문에 격자 비율이나 크기가 달라도
+       FFT가 두 방향의 격자를 찾았다면 후보로 사용한다. */
+    G.scale=(L1+L2)/2;
+    cands.push(G);
+  }
+  /* 균형 모드: 안경테가 여러 후보를 가려도 선명한 한 곳이 있으면 진행한다. */
+  if(cands.length<1) return {ok:false,why:"noGridOut"};
+
+  /* 서로 다른 위치의 후보들이 주기에 대해 합의해야 한다 */
+  var scales=cands.map(function(c){return c.scale;});
+  var medScale=median(scales);
+  var agree=cands.filter(function(c){
+    return Math.abs(c.scale-medScale)/medScale < .22;});
+  if(agree.length<1) return {ok:false,why:"noGridOut"};
+
+  var bestOut=agree[0];
+  for(i=1;i<agree.length;i++) if(agree[i].strength>bestOut.strength) bestOut=agree[i];
+
+  var A=magMatrix(Gin,bestOut);
+  if(!A) return {ok:false,why:"illCond"};
+
+  /* 기울기(원근) 검사: 렌즈 밖 격자가 직각이어야 함 */
+  var go=[bestOut.g1.fx,bestOut.g2.fx,bestOut.g1.fy,bestOut.g2.fy];
+  var dot=go[0]*go[1]+go[2]*go[3];
+  var n1=Math.hypot(go[0],go[2]), n2=Math.hypot(go[1],go[3]);
+  var skew=Math.abs(dot/(n1*n2));
+  if(skew>.75) return {ok:false,why:"tilt"};
+
+  /* --- 자동 거리 ---
+     밖 격자의 겉보기 주기(px)와 초점거리 f, 실제 격자 크기 P로
+     a+b = f*P/pitch_px. 배율만으로는 절대 거리가 안 나오므로 f가 필요하다. */
+  var outPitchPx=1/bestOut.scale;
+
+  /* 여기서는 원시 배율만 반환한다. 무안경 기준값은 tick()에서 제거한다. */
+  return {ok:true, A:A,
+          score:Math.min(Gin.strength,bestOut.strength), skew:skew,
+          outPitchPx:outPitchPx};
+}
+
+/* ---------- 랜덤 점 추적 ----------
+   무안경 기준의 비주기 점 무늬를 현재 프레임에서 다시 찾는다.
+   렌즈 밖 affine은 카메라 움직임 C, 렌즈 안 affine은 C×L 이므로
+   L = C^-1×(C×L) 로 렌즈만의 방향별 배율을 분리할 수 있다. */
+function rgbaToGray(src,W,H){
+  var g=new Uint8Array(W*H);
+  for(var i=0,j=0;i<g.length;i++,j+=4)
+    g[i]=(src[j]*77+src[j+1]*150+src[j+2]*29)>>8;
+  return g;
+}
+function halfGray(src,W,H){
+  var w=W>>1,h=H>>1,out=new Uint8Array(w*h);
+  for(var y=0;y<h;y++)for(var x=0;x<w;x++){
+    var i=(y*2)*W+x*2;
+    out[y*w+x]=(src[i]+src[i+1]+src[i+W]+src[i+W+1]+2)>>2;
+  }
+  return {g:out,w:w,h:h};
+}
+function cornerScore(g,W,H,x,y){
+  var xx=0,yy=0,xy=0;
+  for(var j=-4;j<=4;j+=2)for(var i=-4;i<=4;i+=2){
+    var p=(y+j)*W+x+i;
+    var gx=g[p+1]-g[p-1],gy=g[p+W]-g[p-W];
+    xx+=gx*gx; yy+=gy*gy; xy+=gx*gy;
+  }
+  var tr=xx+yy,disc=Math.sqrt(Math.max(0,(xx-yy)*(xx-yy)+4*xy*xy));
+  return (tr-disc)/2;
+}
+function edgeSharpness(g,W,H,inside){
+  var cx=W*.5,cy=H*.5*(370/400),R=Math.min(W,H)*.24,sum=0,n=0;
+  for(var y=3;y<H-3;y+=3)for(var x=3;x<W-3;x+=3){
+    var rr=Math.hypot(x-cx,y-cy)/R;
+    if(inside?rr>.82:rr<1.05)continue;
+    var p=y*W+x;
+    sum+=Math.abs(g[p+1]-g[p-1])+Math.abs(g[p+W]-g[p-W]);n++;
+  }
+  return n?sum/n:0;
+}
+function selectDotFeatures(g,W,H,inside){
+  var cx=W*.5,cy=H*.5*(370/400),R=Math.min(W,H)*.24;
+  var list=[],step=inside?5:7,margin=22;
+  for(var y=margin;y<H-margin;y+=step)for(var x=margin;x<W-margin;x+=step){
+    var rr=Math.hypot(x-cx,y-cy)/R;
+    var allowed=inside?(rr<.84):(rr>1.08);
+    if(!allowed) continue;
+    var sc=cornerScore(g,W,H,x,y);
+    if(sc>360) list.push({x:x,y:y,score:sc});
+  }
+  list.sort(function(a,b){return b.score-a.score;});
+  var out=[],limit=inside?210:150,buckets={};
+  for(var k=0;k<list.length&&out.length<limit;k++){
+    var p=list[k], gx=Math.min(6,Math.floor(p.x/W*7)), gy=Math.min(6,Math.floor(p.y/H*7));
+    var key=gx+":"+gy,cap=inside?7:5;
+    if((buckets[key]||0)>=cap)continue;
+    var near=out.some(function(q){return Math.hypot(p.x-q.x,p.y-q.y)<(inside?7:9);});
+    if(!near){out.push(p);buckets[key]=(buckets[key]||0)+1;}
+  }
+  return out;
+}
+function zncc(a,b,W,H,ax,ay,bx,by,rad){
+  if(ax-rad<0||ay-rad<0||ax+rad>=W||ay+rad>=H||
+     bx-rad<0||by-rad<0||bx+rad>=W||by+rad>=H) return -2;
+  var sa=0,sb=0,saa=0,sbb=0,sab=0,n=0;
+  for(var j=-rad;j<=rad;j++)for(var i=-rad;i<=rad;i++){
+    var va=a[(ay+j)*W+ax+i],vb=b[(by+j)*W+bx+i];
+    sa+=va;sb+=vb;saa+=va*va;sbb+=vb*vb;sab+=va*vb;n++;
+  }
+  var vaa=saa-sa*sa/n,vbb=sbb-sb*sb/n;
+  if(vaa<80||vbb<80) return -2;
+  return (sab-sa*sb/n)/Math.sqrt(vaa*vbb);
+}
+function predictPoint(p,f){
+  return f?{x:f.A[0]*p.x+f.A[1]*p.y+f.t[0],
+            y:f.A[2]*p.x+f.A[3]*p.y+f.t[1]}:{x:p.x,y:p.y};
+}
+function matchDot(ref,cur,W,H,p,rh,ch,rq,cq,inside,pred){
+  /* 1/4 영상에서 최대 약 100px의 큰 흔들림을 먼저 찾고,
+     1/2 → 원본 순서로 정밀화한다. */
+  var pp=predictPoint(p,pred);
+  var ax=Math.round(p.x/4),ay=Math.round(p.y/4);
+  var px=Math.round(pp.x/4),py=Math.round(pp.y/4);
+  var range=pred?(inside?14:9):26,peaks=[];
+  for(var dy=-range;dy<=range;dy++)for(var dx=-range;dx<=range;dx++){
+    var s=zncc(rq.g,cq.g,rq.w,rq.h,ax,ay,px+dx,py+dy,3);
+    if(s>.16)peaks.push({s:s,x:px+dx,y:py+dy});
+  }
+  peaks.sort(function(a,b){return b.s-a.s;});
+  var coarse=[];
+  for(var z=0;z<peaks.length&&coarse.length<(inside?5:1);z++){
+    if(coarse.every(function(q){return Math.hypot(q.x-peaks[z].x,q.y-peaks[z].y)>2.2;}))
+      coarse.push(peaks[z]);
+  }
+  var answers=[],ahx=Math.round(p.x/2),ahy=Math.round(p.y/2);
+  for(z=0;z<coarse.length;z++){
+    var hx=coarse[z].x*2,hy=coarse[z].y*2,halfBest=-2,hbx=hx,hby=hy;
+    for(dy=-4;dy<=4;dy++)for(dx=-4;dx<=4;dx++){
+      var hs=zncc(rh.g,ch.g,rh.w,rh.h,ahx,ahy,hx+dx,hy+dy,4);
+      if(hs>halfBest){halfBest=hs;hbx=hx+dx;hby=hy+dy;}
+    }
+    if(halfBest<.28)continue;
+    var fx=hbx*2,fy=hby*2,fullBest=-2,rx=fx,ry=fy;
+    for(dy=-3;dy<=3;dy++)for(dx=-3;dx<=3;dx++){
+      var ss=zncc(ref,cur,W,H,p.x,p.y,fx+dx,fy+dy,6);
+      if(ss>fullBest){fullBest=ss;rx=fx+dx;ry=fy+dy;}
+    }
+    if(fullBest>.34)answers.push({x:p.x,y:p.y,u:rx,v:ry,corr:fullBest});
+    else if(inside&&halfBest>.43)answers.push({x:p.x,y:p.y,u:hbx*2,v:hby*2,
+      corr:halfBest*.86,coarse:true});
+  }
+  answers.sort(function(a,b){return b.corr-a.corr;});
+  return inside?answers.slice(0,4):(answers[0]||null);
+}
+function trackDots(ref,cur,W,H,pts,inside,pred){
+  var rh=halfGray(ref,W,H),ch=halfGray(cur,W,H);
+  var rq=halfGray(rh.g,rh.w,rh.h),cq=halfGray(ch.g,ch.w,ch.h),out=[];
+  for(var i=0;i<pts.length;i++){
+    var m=matchDot(ref,cur,W,H,pts[i],rh,ch,rq,cq,inside,pred);
+    if(inside){for(var j=0;j<m.length;j++){m[j].id=i;out.push(m[j]);}}
+    else if(m){m.id=i;out.push(m);}
+  }
+  return out;
+}
+function solve3(M,b){
+  var a=[[M[0],M[1],M[2],b[0]],[M[3],M[4],M[5],b[1]],[M[6],M[7],M[8],b[2]]];
+  for(var c=0;c<3;c++){
+    var q=c;for(var r=c+1;r<3;r++)if(Math.abs(a[r][c])>Math.abs(a[q][c]))q=r;
+    if(Math.abs(a[q][c])<1e-8)return null;
+    var t=a[c];a[c]=a[q];a[q]=t;
+    var d=a[c][c];for(var k=c;k<4;k++)a[c][k]/=d;
+    for(r=0;r<3;r++)if(r!==c){var f=a[r][c];for(k=c;k<4;k++)a[r][k]-=f*a[c][k];}
+  }
+  return [a[0][3],a[1][3],a[2][3]];
+}
+function fitAffineRaw(ps){
+  if(ps.length<3)return null;
+  var M=[0,0,0,0,0,0,0,0,0],bu=[0,0,0],bv=[0,0,0];
+  for(var i=0;i<ps.length;i++){
+    var p=ps[i],z=[p.x,p.y,1];
+    for(var r=0;r<3;r++)for(var c=0;c<3;c++)M[r*3+c]+=z[r]*z[c];
+    for(r=0;r<3;r++){bu[r]+=z[r]*p.u;bv[r]+=z[r]*p.v;}
+  }
+  var u=solve3(M,bu),v=solve3(M,bv);if(!u||!v)return null;
+  return {A:[u[0],u[1],v[0],v[1]],t:[u[2],v[2]]};
+}
+function affineErr(f,p){
+  return Math.hypot(f.A[0]*p.x+f.A[1]*p.y+f.t[0]-p.u,
+                    f.A[2]*p.x+f.A[3]*p.y+f.t[1]-p.v);
+}
+function uniqueAffineInliers(f,ps,lim){
+  var byId={};
+  for(var i=0;i<ps.length;i++){
+    var p=ps[i],e=affineErr(f,p),id=p.id==null?"p"+i:"f"+p.id;
+    if(e<=lim&&(!byId[id]||e<byId[id].e))byId[id]={p:p,e:e};
+  }
+  return Object.keys(byId).map(function(k){return byId[k].p;});
+}
+function fitAffineRobust(ps){
+  if(ps.length<7)return null;
+  var best=[];
+  /* 반복 글자에서 생기는 잘못된 짝을 제거한다. 큰 흔들림 모드는 오매칭이
+     늘 수 있으므로 충분한 RANSAC 반복과 비공선 삼각형을 사용한다. */
+  for(var it=0;it<1200;it++){
+    var tri=[],used={};
+    var guard=0;
+    while(tri.length<3&&guard++<30){
+      var k=Math.floor(Math.random()*ps.length),id=ps[k].id==null?k:ps[k].id;
+      if(!used[id]){used[id]=1;tri.push(ps[k]);}
+    }
+    if(tri.length<3)continue;
+    var area=Math.abs((tri[1].x-tri[0].x)*(tri[2].y-tri[0].y)-
+                      (tri[1].y-tri[0].y)*(tri[2].x-tri[0].x));
+    if(area<90)continue;
+    var f=fitAffineRaw(tri);if(!f)continue;
+    var ins=uniqueAffineInliers(f,ps,3.2);
+    if(ins.length>best.length)best=ins;
+  }
+  if(best.length<7)return null;
+  var fit=fitAffineRaw(best);
+  for(it=0;it<2;it++){
+    var es=best.map(function(p){return affineErr(fit,p);}),med=median(es),lim=Math.max(1.4,med*2.8);
+    best=uniqueAffineInliers(fit,ps,lim);
+    if(best.length<7)return null;fit=fitAffineRaw(best);
+  }
+  var sum=0;best.forEach(function(p){var e=affineErr(fit,p);sum+=e*e;});
+  fit.n=best.length;fit.rms=Math.sqrt(sum/best.length);return fit;
+}
+
+/* ---------- 7×7 겹침 국소 변형장 ---------- */
+function fitAffineWeighted(ps,cx,cy,radius){
+  if(ps.length<6)return null;
+  var M=[0,0,0,0,0,0,0,0,0],bu=[0,0,0],bv=[0,0,0],used=0;
+  var r2=radius*radius;
+  for(var i=0;i<ps.length;i++){
+    var p=ps[i],dx=p.x-cx,dy=p.y-cy,d2=dx*dx+dy*dy;
+    if(d2>r2)continue;
+    var w=Math.exp(-d2/(r2*.72));
+    var x=p.x,y=p.y;
+    M[0]+=w*x*x; M[1]+=w*x*y; M[2]+=w*x;
+    M[3]+=w*x*y; M[4]+=w*y*y; M[5]+=w*y;
+    M[6]+=w*x;   M[7]+=w*y;   M[8]+=w;
+    bu[0]+=w*x*p.u;bu[1]+=w*y*p.u;bu[2]+=w*p.u;
+    bv[0]+=w*x*p.v;bv[1]+=w*y*p.v;bv[2]+=w*p.v;used++;
+  }
+  if(used<6)return null;
+  var au=solve3(M,bu),av=solve3(M,bv);if(!au||!av)return null;
+  return {A:[au[0],au[1],av[0],av[1]],t:[au[2],av[2]],n:used};
+}
+function localLensField(inPairs,inside,C,W,H){
+  var invC=inv2(C.A);if(!invC)return null;
+  var cx=W*.5,cy=H*.5*(370/400),R=Math.min(W,H)*.24;
+  var clean=uniqueAffineInliers(inside,inPairs,Math.max(2.2,(inside.rms||1)*2.6));
+  var vecs=[],nodes=[],radius=R*.55;
+  for(var gy=0;gy<GRID_N;gy++)for(var gx=0;gx<GRID_N;gx++){
+    var nx=(gx-(GRID_N-1)/2)/((GRID_N-1)/2);
+    var ny=(gy-(GRID_N-1)/2)/((GRID_N-1)/2);
+    if(nx*nx+ny*ny>.88)continue;
+    var px=cx+nx*R*.72,py=cy+ny*R*.72;
+    var f=fitAffineWeighted(clean,px,py,radius);if(!f||f.n<7)continue;
+    var L=mul2(invC,f.A),m=matrixToMeasurement(L);
+    if(!m.ok||m.signal<MIN_LENS_POWER*.5||m.signal>18)continue;
+    m.vec._nodeX=gx;m.vec._nodeY=gy;m.vec._support=f.n;
+    vecs.push(m.vec);nodes.push({x:gx,y:gy,n:f.n});
+  }
+  if(vecs.length<6)return null;
+  var agg=robustVec(vecs);if(!agg)return null;
+  return {vec:agg.vec,spread:agg.spread,count:agg.n,nodes:nodes};
+}
+
+/* 기준 영상의 특징점을 현재 프레임에서 추적한다.
+   렌즈 밖 affine C로 카메라 흔들림을 제거한 뒤, 렌즈 안은 7×7 겹침 영역으로
+   국소 affine을 반복 추정한다. 국소 분석이 부족하면 전체 affine을 안전망으로 쓴다. */
+analyzeFrame=function(imgData,W,H){
+  if(!S.reference||S.reference.W!==W||S.reference.H!==H)
+    return {ok:false,why:"needReference"};
+  var cur=rgbaToGray(imgData,W,H),ref=S.reference.gray;
+  var outPairs=trackDots(ref,cur,W,H,S.reference.outPts,false,S.motion);
+  var C=fitAffineRobust(outPairs);
+  if(!C&&S.motion){outPairs=trackDots(ref,cur,W,H,S.reference.outPts,false,null);C=fitAffineRobust(outPairs);}
+  if(!C||C.n<10){
+    S.motion=null;
+    var outSharp=edgeSharpness(cur,W,H,false)/(S.reference.sharpOut||1);
+    return {ok:false,why:"noDotsOut",message:outSharp<.42?
+      "렌즈 밖 글자가 흐립니다 — 초점을 맞춰 주세요":
+      "배경 특징을 다시 찾는 중입니다 — 휴대폰을 고정해 주세요"};
+  }
+  S.motion=C;
+  var inPairs=trackDots(ref,cur,W,H,S.reference.inPts,true,C);
+  var inside=fitAffineRobust(inPairs);
+  var matchedIds={};inPairs.forEach(function(p){matchedIds[p.id]=1;});
+  var matchedIn=Object.keys(matchedIds).length;
+  if(!inside||inside.n<9){
+    var inSharp=edgeSharpness(cur,W,H,true)/(S.reference.sharpIn||1);
+    return {ok:false,why:"noDotsIn",message:inSharp<.42?
+      "렌즈 안 글자가 흐립니다 — 반사광을 피하고 초점을 맞춰 주세요":
+      "렌즈 안 특징 "+matchedIn+"개 — 렌즈 중앙을 원에 맞춰 주세요"};
+  }
+  var invC=inv2(C.A);if(!invC)return {ok:false,why:"illCond"};
+  var L=mul2(invC,inside.A);
+  var c1=Math.hypot(C.A[0],C.A[2]),c2=Math.hypot(C.A[1],C.A[3]);
+  var dot=Math.abs((C.A[0]*C.A[1]+C.A[2]*C.A[3])/(c1*c2));
+  var scale=Math.sqrt(Math.abs(C.A[0]*C.A[3]-C.A[1]*C.A[2]));
+  var skew=Math.max(dot,Math.min(1,(C.rms||0)/8));
+  if(dot>.48)return {ok:false,why:"tilt",message:"휴대폰이 배경과 기울어졌습니다 — 수직·평행을 다시 맞춰 주세요"};
+  if(scale<.88||scale>1.12)return {ok:false,why:"moved",message:"기준 촬영 후 휴대폰 위치가 바뀌었습니다 — 같은 거리에서 기준을 다시 잡아 주세요"};
+  var ccx=W*.5,ccy=H*.5,mx=C.A[0]*ccx+C.A[1]*ccy+C.t[0]-ccx,
+      my=C.A[2]*ccx+C.A[3]*ccy+C.t[1]-ccy;
+  var field=localLensField(inPairs,inside,C,W,H);
+  return {ok:true,A:L,local:field,score:Math.min(C.n,inside.n),skew:skew,
+          outPitchPx:scale,outScale:scale,outCount:C.n,inCount:inside.n,
+          motionPx:Math.hypot(mx,my)};
+};
+
+/* ---------- 강건 집계 (중앙값 + MAD) ---------- */
+function median(a){if(!a.length)return NaN;
+  var s=a.slice().sort(function(p,q){return p-q;}),m=s.length>>1;
+  return s.length%2?s[m]:(s[m-1]+s[m])/2;}
+function robustVec(list){
+  if(!list.length) return null;
+  var keys=["M","J0","J45"], med={}, k;
+  for(k=0;k<3;k++) med[keys[k]]=median(list.map(function(v){return v[keys[k]];}));
+  /* MAD 기반 이상치 제거 */
+  var devs=list.map(function(v){
+    return Math.abs(v.M-med.M)+Math.abs(v.J0-med.J0)+Math.abs(v.J45-med.J45);});
+  var mad=median(devs)||1e-6;
+  var kept=list.filter(function(v,i){return devs[i]<=Math.max(.2,mad*3);});
+  if(kept.length<3) kept=list;
+  var out={M:0,J0:0,J45:0};
+  for(k=0;k<3;k++) out[keys[k]]=median(kept.map(function(v){return v[keys[k]];}));
+  return {vec:out,n:kept.length,spread:mad};
+}
+
+/* ---------- 무안경 기준 보정 ---------- */
+function setReferenceUI(){
+  var box=$("refBox"),btn=$("refBtn"),d=currentDistance();
+  box.classList.toggle("ready",!!S.reference);
+  if(!S.stream){
+    $("refTitle").textContent=d.short+" "+d.label+" 기준";
+    $("refState").textContent="카메라를 켠 뒤 안경 없이 기준을 잡아 주세요.";
+    btn.textContent="기준 잡기";btn.disabled=true;
+  }else if(S.refMode){
+    $("refTitle").textContent=d.label+" 무안경 기준 측정 중";
+    $("refState").textContent="안경을 치우고 휴대폰·책을 움직이지 마세요.";
+    btn.textContent=Math.min(S.refSamples.length,REF_SAMPLE_TARGET)+" / "+REF_SAMPLE_TARGET;btn.disabled=true;
+  }else if(S.reference){
+    $("refTitle").textContent=d.label+" 기준 완료";
+    $("refState").textContent="휴대폰과 책은 고정하고, 안경렌즈만 가운데 표시선에 세워 주세요.";
+    btn.textContent="기준 다시 잡기";btn.disabled=false;
+  }else{
+    $("refTitle").textContent=d.short+" "+d.label+" 기준";
+    $("refState").textContent="A4 끝에 책과 카메라를 맞춘 뒤, 안경을 치우고 눌러 주세요.";
+    btn.textContent=d.label+" 기준 잡기";btn.disabled=false;
+  }
+}
+function startReference(){
+  if(!S.stream){toast("먼저 카메라를 켜 주세요.");return;}
+  resetAutoSequence();
+  S.reference=null;S.references[S.stage]=null;S.motion=null;S.refSamples=[];S.refMode=true;
+  S.samples=[];S.bad=0;lastD=currentDistance().mm;
+  renderLive(false);setReferenceUI();
+  setBanner("안경을 치우고 책의 글자를 그대로 유지해 주세요","warn");
+}
+function finishReference(){
+  var list=S.refSamples;S.refMode=false;S.refSamples=[];
+  if(!list.length){S.reference=null;setReferenceUI();return;}
+  var W=list[0].W,H=list[0].H,n=W*H,avg=new Uint8Array(n);
+  for(var i=0;i<n;i++){
+    var sum=0;for(var j=0;j<list.length;j++)sum+=list[j].gray[i];avg[i]=Math.round(sum/list.length);
+  }
+  var inPts=selectDotFeatures(avg,W,H,true),outPts=selectDotFeatures(avg,W,H,false);
+  if(inPts.length<28||outPts.length<28){
+    S.reference=null;setReferenceUI();
+    setBanner("작은 글자·모서리가 부족합니다 — 글씨가 많은 책을 화면 가득 보여 주세요","bad");
+    toast("렌즈 원 안과 바깥에 작은 글자가 충분히 보이도록 다시 맞춰 주세요.");return;
+  }
+  S.reference={gray:avg,W:W,H:H,inPts:inPts,outPts:outPts,
+    sharpIn:edgeSharpness(avg,W,H,true),sharpOut:edgeSharpness(avg,W,H,false),outPitchPx:1};
+  S.references[S.stage]=S.reference;S.motion=null;lastD=currentDistance().mm;
+  S.samples=[];S.noLens=0;setReferenceUI();renderLive(false);renderStageUI();
+  setBanner("기준 완료 — "+(S.side==="R"?"오른쪽(OD)":"왼쪽(OS)")+" 렌즈를 원 안에 맞춰 주세요","ok");
+  toast(currentDistance().label+" 기준 완료. 안경은 A4 가운데 표시선에 세워 주세요.");
+}
+
+/* ---------- 카메라 자동초점 ---------- */
+async function setupAutoFocus(){
+  var track=S.stream&&S.stream.getVideoTracks()[0];
+  S.focusTrack=track||null;S.focusModes=[];S.focusBusy=false;S.lastFocusRetry=0;
+  if(!track)return false;
+  try{
+    var caps=track.getCapabilities?track.getCapabilities():{};
+    S.focusModes=Array.isArray(caps.focusMode)?caps.focusMode:[];
+    if(S.focusModes.indexOf("continuous")>=0){
+      await track.applyConstraints({advanced:[{focusMode:"continuous"}]});
+      return true;
+    }
+  }catch(e){}
+  /* 초점 제어 API가 없는 iPhone Safari도 카메라 자체의 연속 AF는 계속 동작한다. */
+  return false;
+}
+async function requestAutoFocus(silent){
+  if(!S.focusTrack||S.focusTrack.readyState==="ended")return false;
+  var now=Date.now();if(S.focusBusy||now-S.lastFocusRetry<1600)return false;
+  S.focusBusy=true;S.lastFocusRetry=now;
+  var ok=false;
+  try{
+    if(S.focusModes.indexOf("single-shot")>=0){
+      await S.focusTrack.applyConstraints({advanced:[{focusMode:"single-shot"}]});
+      ok=true;
+      await new Promise(function(resolve){setTimeout(resolve,450);});
+    }
+    if(S.focusModes.indexOf("continuous")>=0){
+      await S.focusTrack.applyConstraints({advanced:[{focusMode:"continuous"}]});
+      ok=true;
+    }
+  }catch(e){}
+  S.focusBusy=false;
+  if(!silent)toast(ok?"카메라 중앙에 자동초점을 다시 요청했습니다.":
+    "이 기기는 웹 초점 제어를 지원하지 않아 기본 자동초점을 사용합니다.");
+  return ok;
+}
+
+/* ---------- 카메라 ---------- */
+async function startCam(){
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){toast("이 브라우저는 카메라를 지원하지 않습니다.");return;}
+  stopCam();
+  try{
+    S.stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},
+      width:{ideal:1920},height:{ideal:1440},frameRate:{ideal:30}},audio:false});
+    $("vid").srcObject=S.stream;await $("vid").play();await setupAutoFocus();
+    $("vid").classList.remove("hidden");$("empty").classList.add("hidden");
+    resetAutoSequence();S.samples=[];S.reference=null;S.references=[null,null];S.motion=null;
+    S.refSamples=[];S.refMode=false;S.last=null;S.bad=0;S.stage=0;S.side="R";
+    S.distanceData=[{R:null,L:null},{R:null,L:null}];S.qualityData=[{R:null,L:null},{R:null,L:null}];
+    S.results={R:null,L:null};lastD=currentDistance().mm;
+    setReferenceUI();renderLive();renderResults();renderEyeGuide();renderStageUI();
+    setBanner("A4 가로 21cm 세팅 후, 안경 없이 ‘기준 잡기’를 눌러 주세요","warn");
+    clearInterval(S.timer);S.timer=setInterval(tick,380);
+  }catch(e){
+    setBanner("화면을 눌러 카메라를 다시 켜 주세요","warn");
+    toast("카메라 권한을 허용한 뒤 촬영 화면을 눌러 주세요. HTTPS 환경이 필요합니다.");
+  }
+}
+function stopCam(){
+  resetAutoSequence();clearInterval(S.timer);S.timer=null;
+  if(S.stream){S.stream.getTracks().forEach(function(t){t.stop();});S.stream=null;}
+  if($("vid")){ $("vid").srcObject=null;$("vid").classList.add("hidden"); }
+  if($("empty"))$("empty").classList.remove("hidden");
+  S.focusTrack=null;S.focusModes=[];S.focusBusy=false;S.reference=null;S.motion=null;
+  S.refSamples=[];S.refMode=false;S.last=null;
+  setReferenceUI();
+}
+
+var WHY={noGrid:"글자·무늬가 안 보입니다 — 조명을 밝게 해 주세요",
+  noGridIn:"렌즈 안 글자를 찾지 못했습니다",noGridOut:"렌즈 바깥 글자가 필요합니다",
+  noDotsIn:"렌즈 안 글자를 기준 영상과 연결하지 못했습니다",noDotsOut:"배경 특징을 다시 찾는 중입니다",
+  needReference:"현재 거리의 무안경 기준을 먼저 잡아 주세요",moved:"휴대폰 위치가 바뀌었습니다 — 기준을 다시 잡아 주세요",
+  tilt:"휴대폰과 책이 평행하지 않습니다",range:"배율이 측정 범위를 벗어났습니다",illCond:"변형 방향이 불안정합니다",
+  tooClose:"거리가 너무 짧습니다",tooCoarse:"작은 글자가 더 많은 페이지를 사용해 주세요"};
+
+function tick(){
+  var v=$("vid");if(!v.videoWidth)return;
+  var W=ANALYSIS_W,H=Math.round(W*v.videoHeight/v.videoWidth);
+  var cv=$("work");cv.width=W;cv.height=H;
+  var ctx=cv.getContext("2d",{willReadFrequently:true});ctx.drawImage(v,0,0,W,H);
+  var d=ctx.getImageData(0,0,W,H).data;
+
+  if(S.refMode){
+    resetAutoSequence();var gray=rgbaToGray(d,W,H);
+    var inTest=selectDotFeatures(gray,W,H,true),outTest=selectDotFeatures(gray,W,H,false);
+    if(inTest.length<28||outTest.length<28){setBanner("작은 글자가 원 안과 바깥에 충분히 보이게 맞춰 주세요","bad");return;}
+    S.refSamples.push({gray:gray,W:W,H:H});setReferenceUI();renderLive(false);
+    setBanner("무안경 기준 측정 중… "+Math.min(S.refSamples.length,REF_SAMPLE_TARGET)+"/"+REF_SAMPLE_TARGET,"warn");
+    if(S.refSamples.length>=REF_SAMPLE_TARGET)finishReference();return;
+  }
+
+  if(!S.reference){resetAutoSequence();S.samples=[];renderLive(false);return;}
+  var r=analyzeFrame(d,W,H);
+  if(r.ok){
+    S.bad=0;S.last=r;
+    /* 렌즈 밖 affine이 카메라 평행이동/작은 흔들림을 보정하므로,
+       가벼운 손떨림은 허용한다. 매우 큰 이동 프레임만 현재 프레임 하나를 건너뛴다. */
+    if(r.motionPx>AUTO_SAVE_MAX_MOTION){
+      cancelAutoSave();
+      renderLive(false);
+      setBanner("움직임이 큽니다 — 좋은 프레임은 유지 중, 잠시만 안정시켜 주세요","warn");
+      return;
+    }
+    var measured=matrixToMeasurement(r.A);
+    if(r.local&&r.local.count>=6){
+      var lr=vecToRx(r.local.vec);
+      measured={ok:true,vec:r.local.vec,signal:Math.max(Math.abs(lr.sph),Math.abs(lr.sph+lr.cyl)),local:true};
+    }
+    if(!measured.ok){resetAutoSequence();S.samples=[];renderLive(false);setBanner(WHY[measured.why]||"측정 범위를 벗어났습니다","bad");return;}
+    if(measured.signal<MIN_LENS_POWER){S.noLens=(S.noLens||0)+1;resetAutoSequence();S.samples=[];renderLive(false);
+      setBanner("안경이 감지되지 않습니다 — 렌즈를 원 안에 넣으세요","warn");return;}
+    S.noLens=0;
+    if(Date.now()<S.autoSaveCooldownUntil){resetAutoSequence();S.samples=[];renderLive(false);setBanner("다음 렌즈를 원 안에 맞춰 주세요","ok");return;}
+    measured.vec._skew=r.skew;measured.vec._localCount=r.local?r.local.count:0;
+    measured.vec._localSpread=r.local?r.local.spread:9;measured.vec._motion=r.motionPx;
+    /* 전체 통계에는 유효 프레임을 계속 쌓되, 자동 저장용 최근 표본은
+       이전 값과 너무 다른 순간 프레임을 조용히 제외한다. */
+    var accepted=addAutoSample(measured.vec,r.skew);
+    if(accepted){
+      S.samples.push(measured.vec);if(S.samples.length>80)S.samples.shift();
+    }
+  }else{
+    /* 한두 프레임의 추적 실패는 손떨림에서 흔하므로 기존 좋은 표본을 유지한다.
+       연속 실패가 길어질 때만 자동초점/재정렬을 유도한다. */
+    cancelAutoSave();
+    S.bad=(S.bad||0)+1;
+    if((r.why==="noDotsIn"||r.why==="noDotsOut")&&S.bad>=4)requestAutoFocus(true);
+    if(S.bad>50){S.autoSamples=[]; if(S.samples.length>30)S.samples=S.samples.slice(-30);}
+    setBanner(r.message||WHY[r.why]||"정렬 중…","warn");
+  }
+  renderLive(r.ok);
+}
+
+function setBanner(msg,cls){
+  var b=$("banner"); b.textContent=msg; b.className="banner "+(cls||"");
+}
+
+function renderLive(gotOne){
+  var n=S.samples.length;
+  $("mLeft").textContent="유효 프레임 "+n; if($("gridStat")){var lc=S.last&&S.last.local?S.last.local.count:0;$("gridStat").textContent="7×7 국소 분석 "+lc+"개 영역";}
+  var agg=robustVec(S.samples);
+  if(!agg||n<2){
+    cancelAutoSave();
+    $("lSph").textContent="—";$("lCyl").textContent="—";$("lAxis").textContent="—";
+    $("mFill").style.width="0%"; $("mRight").textContent="—";
+    $("saveBtn").disabled=true;
+    if(gotOne) setBanner("측정 중… 그대로 유지","warn");
+    return;
+  }
+  var rx=vecToRx(agg.vec);
+  /* 여러 프레임 평균이 다시 0D 부근이면 숫자를 표시하지 않는다. */
+  if(S.reference && Math.max(Math.abs(rx.sph),Math.abs(rx.sph+rx.cyl))<MIN_LENS_POWER){
+    cancelAutoSave();
+    S.samples=[];
+    $("lSph").textContent="—";$("lCyl").textContent="—";$("lAxis").textContent="—";
+    $("mFill").style.width="0%"; $("mRight").textContent="—";
+    $("saveBtn").disabled=true;
+    setBanner("안경이 감지되지 않습니다 — 렌즈를 원 안에 넣으세요","warn");
+    return;
+  }
+  /* 산포가 크면 숫자를 보여주지 않는다. 흔들리는 값을 자신 있게 띄우는 게 가장 나쁘다. */
+  if(agg.spread>1.1){
+    cancelAutoSave();
+    $("lSph").textContent="—";$("lCyl").textContent="—";$("lAxis").textContent="—";
+    $("mFill").style.width="0%";
+    $("mRight").textContent="±"+agg.spread.toFixed(2)+"D 불안정";
+    $("saveBtn").disabled=true;
+    setBanner("값이 흔들립니다 — 안경렌즈를 책과 평행하게 세우고 그대로 유지해 주세요","bad");
+    return;
+  }
+  $("lSph").textContent=fmtP(q25(rx.sph));
+  $("lCyl").textContent=fmtP(q25(rx.cyl));
+  $("lAxis").textContent=Math.abs(rx.cyl)>=.25?Math.round(rx.axis)+"°":"—";
+
+  /* 안정도 = 최근 표본 산포 */
+  var conf=Math.max(0,Math.min(1,1-agg.spread/1.1));
+  var pct=Math.round(conf*Math.min(1,n/18)*100);
+  $("mFill").style.width=pct+"%";
+  $("mRight").textContent="±"+agg.spread.toFixed(2)+"D";
+  $("saveBtn").disabled=!(n>=5&&agg.spread<.65);
+  var auto=autoSaveState();
+  var tiltMsg="";
+  if(S.last&&S.last.local&&S.last.local.spread>.45) tiltMsg=" · 국소 차이 큼";
+  if(S.last&&S.last.motionPx>5) tiltMsg+=" · 흔들림 보정 중";
+  var canAuto=gotOne===true&&S.stream&&S.reference&&!S.refMode&&
+    Date.now()>=S.autoSaveCooldownUntil;
+  if(auto.ready&&canAuto){
+    setBanner("안정 측정 "+AUTO_SAVE_SAMPLES+"/"+AUTO_SAVE_SAMPLES+" — 자동 저장 중","ok");
+    if(!S.autoSavePending){
+      S.autoSavePending=true;
+      S.autoSaveTimer=setTimeout(function(){
+        S.autoSaveTimer=null;
+        var check=autoSaveState();
+        if(!S.autoSavePending||!S.stream||!S.reference||S.refMode||!check.ready){
+          S.autoSavePending=false; renderLive(false); return;
+        }
+        S.autoSavePending=false;
+        saveEye(true);
+      },420);
+    }
+  }else{
+    cancelAutoSave();
+    if(n>=5&&agg.spread<.45){
+      if(Date.now()<S.autoSaveCooldownUntil)
+        setBanner("다음 렌즈를 원 안에 맞춰 주세요","ok");
+      else setBanner("좋은 프레임 수집 중 "+auto.count+"/"+AUTO_SAVE_SAMPLES+tiltMsg,"ok");
+    }else if(gotOne){
+      setBanner("좋은 프레임 수집 중 "+auto.count+"/"+AUTO_SAVE_SAMPLES+" — 약간의 흔들림은 자동 보정됩니다"+tiltMsg,"warn");
+    }
+  }
+}
+
+/* ---------- 두 거리 저장 / 융합 결과 ---------- */
+function qualityFromAgg(agg,source){
+  var local=source.map(function(v){return v._localCount||0;}),ls=source.map(function(v){return isFinite(v._localSpread)?v._localSpread:9;});
+  return {spread:agg.spread,n:agg.n,localCount:median(local)||0,localSpread:median(ls)||9};
+}
+function distanceWeight(q){
+  if(!q)return 1;
+  var stability=1/Math.pow(.14+Math.min(1.2,q.spread),2);
+  var coverage=.65+Math.min(1.1,(q.localCount||0)/18);
+  return stability*coverage;
+}
+function combineDistances(eye){
+  var a=S.distanceData[0][eye],b=S.distanceData[1][eye];if(!a||!b)return null;
+  var qa=S.qualityData[0][eye],qb=S.qualityData[1][eye],wa=distanceWeight(qa),wb=distanceWeight(qb);
+  var vec={M:(a.M*wa+b.M*wb)/(wa+wb),J0:(a.J0*wa+b.J0*wb)/(wa+wb),J45:(a.J45*wa+b.J45*wb)/(wa+wb)};
+  var gap=vecStep(a,b),powerGap=Math.sqrt(Math.pow(a.M-b.M,2)+Math.pow(a.J0-b.J0,2)+Math.pow(a.J45-b.J45,2));
+  return {vec:vec,gap:gap,powerGap:powerGap,qa:qa,qb:qb};
+}
+function confidenceOf(m){
+  if(!m)return null;
+  var spread=Math.max(m.qa?m.qa.spread:9,m.qb?m.qb.spread:9),gap=m.powerGap;
+  if(gap<.22&&spread<.30)return {level:"높음",cls:"ok",note:"21cm·29.7cm 결과가 잘 일치합니다"};
+  if(gap<.48&&spread<.55)return {level:"보통",cls:"warn",note:"두 거리 결과에 약간의 차이가 있습니다"};
+  return {level:"낮음",cls:"bad",note:"거리 간 차이가 큽니다 — 렌즈를 책과 평행하게 맞춰 다시 측정하세요"};
+}
+function updateFinalForEye(eye){
+  var m=combineDistances(eye);if(!m){S.results[eye]=null;return;}
+  S.results[eye]=vecToRx(m.vec);S.results[eye]._merge=m;
+}
+function saveEye(automatic){
+  automatic=automatic===true;
+  var source=automatic?S.autoSamples.slice(-AUTO_SAVE_SAMPLES):S.samples;
+  var agg=robustVec(source);if(!agg)return;
+  resetAutoSequence();
+  var eye=S.side;S.distanceData[S.stage][eye]=agg.vec;S.qualityData[S.stage][eye]=qualityFromAgg(agg,source);
+  updateFinalForEye(eye);renderResults();
+  if(automatic&&navigator.vibrate)navigator.vibrate(65);
+  S.autoSaveCooldownUntil=automatic?Date.now()+AUTO_SAVE_SWITCH_DELAY:0;
+  S.samples=[];renderLive();
+  toast(currentDistance().label+" · "+(eye==="R"?"오른쪽":"왼쪽")+" 렌즈 저장 ("+agg.n+"프레임)");
+
+  if(eye==="R"){
+    S.side="L";renderEyeGuide();
+    setBanner("이제 왼쪽(OS) 렌즈를 원 안에 맞춰 주세요","ok");
+  }else if(S.stage===0){
+    S.stage=1;S.side="R";S.reference=null;S.motion=null;S.samples=[];S.autoSaveCooldownUntil=0;lastD=currentDistance().mm;
+    setReferenceUI();renderStageUI();renderEyeGuide();renderResults();
+    setBanner("1단계 완료 — A4를 긴 변 29.7cm 방향으로 놓고 안경 위치를 14.85cm 가운데로 옮겨 주세요","stage2");
+    toast("이제 A4 세로 29.7cm 세팅으로 바꾸고, 안경 없이 새 기준을 잡아 주세요.");
+  }else{
+    updateFinalForEye("R");updateFinalForEye("L");renderResults();renderEyeGuide();renderStageUI();
+    setBanner("측정 완료 — 두 거리 융합 결과와 신뢰도를 확인하세요","ok");
+  }
+}
+function renderResults(){
+  ["R","L"].forEach(function(e){
+    var rx=S.results[e],cells=[$("r"+e+"_s"),$("r"+e+"_c"),$("r"+e+"_a"),$("r"+e+"_e")];
+    if(!rx){cells.forEach(function(c){c.textContent="—";c.className="pending";});return;}
+    cells[0].textContent=fmtP(q25(rx.sph));cells[1].textContent=fmtP(q25(rx.cyl));
+    cells[2].textContent=Math.abs(rx.cyl)>=.25?Math.round(rx.axis)+"°":"—";cells[3].textContent=fmtP(q25(rx.sph+rx.cyl/2));
+    cells.forEach(function(c){c.className="";});
+  });
+  renderConfidence();renderDistanceChecks();
+}
+function renderConfidence(){
+  var el=$("confInfo");if(!el)return;var parts=[],worst=null,order={"높음":0,"보통":1,"낮음":2};
+  ["R","L"].forEach(function(e){var rx=S.results[e],c=rx&&rx._merge?confidenceOf(rx._merge):null;if(c){parts.push((e==="R"?"우":"좌")+" 신뢰도 "+c.level);if(!worst||order[c.level]>order[worst.level])worst=c;}});
+  if(!parts.length){el.textContent="두 거리 측정이 모두 끝나면 최종 신뢰도가 표시됩니다.";el.className="hint";return;}
+  el.textContent=parts.join(" · ")+" — "+worst.note;el.className="hint conf-"+worst.cls;
+}
+function renderDistanceChecks(){
+  var el=$("distanceChecks");if(!el)return;
+  function one(stage,eye){var v=S.distanceData[stage][eye];if(!v)return "—";var r=vecToRx(v);return fmtP(q25(r.sph))+" / "+fmtP(q25(r.cyl))+(Math.abs(r.cyl)>=.25?" × "+Math.round(r.axis)+"°":"");}
+  el.innerHTML='<div><span>21.0cm</span><b>OD '+one(0,"R")+'</b><b>OS '+one(0,"L")+'</b></div>'+ 
+    '<div><span>29.7cm</span><b>OD '+one(1,"R")+'</b><b>OS '+one(1,"L")+'</b></div>';
+}
+function renderEyeGuide(){
+  var el=$("eyeGuide");if(!el)return;
+  var done=S.distanceData[1].R&&S.distanceData[1].L;
+  if(done){el.classList.add("done");el.innerHTML="측정 완료 <b>✓ 두 거리 융합 분석 완료</b>";return;}
+  el.classList.remove("done");var d=currentDistance();
+  el.innerHTML='<span class="miniStep">'+(S.stage+1)+'/2 · '+d.label+'</span> 지금 측정: <b>'+(S.side==="R"?"오른쪽 눈 (OD)":"왼쪽 눈 (OS)")+'</b>';
+}
+function renderStageUI(){
+  var d=currentDistance();lastD=d.mm;
+  if($("distanceTitle"))$("distanceTitle").textContent=d.short+" · "+d.label;
+  if($("distanceSub"))$("distanceSub").textContent="책↔카메라 "+d.label+" · 안경은 가운데 "+(d.lensMM/10).toFixed(d.lensMM%10?2:1)+"cm";
+  [0,1].forEach(function(i){var p=$("stagePill"+i);if(!p)return;p.classList.toggle("active",S.stage===i);p.classList.toggle("done",i<S.stage||(i===1&&S.distanceData[1].L));});
+  renderEyeGuide();setReferenceUI();
+}
+function resetAll(){
+  resetAutoSequence();S.samples=[];S.results={R:null,L:null};S.distanceData=[{R:null,L:null},{R:null,L:null}];
+  S.qualityData=[{R:null,L:null},{R:null,L:null}];S.references=[null,null];S.reference=null;S.motion=null;
+  S.stage=0;S.side="R";S.autoSaveCooldownUntil=0;lastD=currentDistance().mm;
+  renderResults();renderStageUI();renderLive(false);setBanner("A4 가로 21cm 세팅 후, 안경 없이 기준을 잡아 주세요","warn");
+  toast("측정값을 초기화했습니다.");
+}
+
+/* ---------- 이벤트 ---------- */
+$("refBtn").addEventListener("click",startReference);
+$("saveBtn").addEventListener("click",function(){saveEye(false);});
+$("resetBtn").addEventListener("click",resetAll);
+$("stage").addEventListener("click",function(){if(!S.stream)startCam();});
+$("helpBtn").addEventListener("click",function(){$("help").classList.remove("hidden");});
+$("helpClose").addEventListener("click",function(){$("help").classList.add("hidden");});
+$("help").addEventListener("click",function(e){if(e.target===$("help"))$("help").classList.add("hidden");});
+(function(){
+  function closeTut(){$("tut").classList.add("hidden");try{localStorage.setItem("lmA4TutV1","1");}catch(e){}}
+  $("tutX").addEventListener("click",closeTut);$("tutSkip").addEventListener("click",closeTut);$("tutGo").addEventListener("click",closeTut);
+  $("tut").addEventListener("click",function(e){if(e.target===$("tut"))closeTut();});
+  $("tutOpen").addEventListener("click",function(){$("help").classList.add("hidden");$("tut").classList.remove("hidden");});
+  var seen=false;try{seen=localStorage.getItem("lmA4TutV1")==="1";}catch(e){}
+  if(!seen)$("tut").classList.remove("hidden");
+})();
+window.addEventListener("resize",renderStageUI);
+
+renderResults();renderStageUI();setReferenceUI();renderLive(false);setTimeout(startCam,250);
+})();
+</script>
+</body>
+</html>
