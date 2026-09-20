@@ -379,9 +379,12 @@ function principal(A){
 
 /* 배율 행렬을 실제 도수 벡터로 변환한다.
    무안경 기준 행렬을 제거한 뒤에만 호출해야 카메라 왜곡이 도수로 섞이지 않는다. */
-function matrixToMeasurement(A){
+function matrixToMeasurement(A,wide){
   var prRaw=principal(A);
-  if(prRaw.m1<.35||prRaw.m1>2.6||prRaw.m2<.35||prRaw.m2>2.6)
+  /* 평소 측정 범위는 기존 그대로 유지한다. 고도수 fallback에서만 더 넓은
+     배율 범위를 허용해 기존 저·중도수 정확도에 영향을 주지 않는다. */
+  var minM=wide?.26:.35, maxM=wide?4.8:2.6;
+  if(prRaw.m1<minM||prRaw.m1>maxM||prRaw.m2<minM||prRaw.m2>maxM)
     return {ok:false,why:"range"};
 
   var g=geom();
@@ -536,19 +539,54 @@ function zncc(a,b,W,H,ax,ay,bx,by,rad){
   if(vaa<80||vbb<80) return -2;
   return (sab-sa*sb/n)/Math.sqrt(vaa*vbb);
 }
+/* 고도수에서는 렌즈 안 글자가 위치만 이동하는 것이 아니라 크기도 크게 변한다.
+   기준 패치의 각 샘플을 현재 영상에서 scale만큼 벌리거나 좁혀 비교한다. */
+function grayBilinear(g,W,H,x,y){
+  if(x<0||y<0||x>W-1||y>H-1)return NaN;
+  var x0=Math.floor(x),y0=Math.floor(y),x1=Math.min(W-1,x0+1),y1=Math.min(H-1,y0+1);
+  var fx=x-x0,fy=y-y0;
+  var a=g[y0*W+x0]*(1-fx)+g[y0*W+x1]*fx;
+  var b=g[y1*W+x0]*(1-fx)+g[y1*W+x1]*fx;
+  return a*(1-fy)+b*fy;
+}
+function znccScaled(a,b,W,H,ax,ay,bx,by,rad,scale){
+  if(!isFinite(scale)||scale<=0)return -2;
+  if(ax-rad<0||ay-rad<0||ax+rad>=W||ay+rad>=H||
+     bx-rad*scale<0||by-rad*scale<0||bx+rad*scale>=W||by+rad*scale>=H)return -2;
+  var sa=0,sb=0,saa=0,sbb=0,sab=0,n=0;
+  for(var j=-rad;j<=rad;j++)for(var i=-rad;i<=rad;i++){
+    var va=a[(Math.round(ay)+j)*W+Math.round(ax)+i];
+    var vb=grayBilinear(b,W,H,bx+i*scale,by+j*scale);
+    if(!isFinite(vb))return -2;
+    sa+=va;sb+=vb;saa+=va*va;sbb+=vb*vb;sab+=va*vb;n++;
+  }
+  var vaa=saa-sa*sa/n,vbb=sbb-sb*sb/n;
+  if(vaa<80||vbb<80)return -2;
+  return (sab-sa*sb/n)/Math.sqrt(vaa*vbb);
+}
 function predictPoint(p,f){
   return f?{x:f.A[0]*p.x+f.A[1]*p.y+f.t[0],
             y:f.A[2]*p.x+f.A[3]*p.y+f.t[1]}:{x:p.x,y:p.y};
 }
-function matchDot(ref,cur,W,H,p,rh,ch,rq,cq,inside,pred){
+/* 렌즈 중심을 기준으로 isotropic 배율을 먼저 적용하고, 그 뒤 카메라 움직임 C를 적용한다. */
+function scaledLensPrediction(C,cx,cy,scale){
+  var A=[C.A[0]*scale,C.A[1]*scale,C.A[2]*scale,C.A[3]*scale];
+  var dx=(1-scale)*cx,dy=(1-scale)*cy;
+  return {A:A,t:[C.A[0]*dx+C.A[1]*dy+C.t[0],
+                  C.A[2]*dx+C.A[3]*dy+C.t[1]]};
+}
+function matchDot(ref,cur,W,H,p,rh,ch,rq,cq,inside,pred,matchScale,tight){
   /* 1/4 영상에서 최대 약 100px의 큰 흔들림을 먼저 찾고,
      1/2 → 원본 순서로 정밀화한다. */
+  matchScale=(isFinite(matchScale)&&matchScale>0)?matchScale:1;
   var pp=predictPoint(p,pred);
   var ax=Math.round(p.x/4),ay=Math.round(p.y/4);
   var px=Math.round(pp.x/4),py=Math.round(pp.y/4);
-  var range=pred?(inside?14:9):26,peaks=[];
+  var range=(typeof tight==="number")?tight:(tight?6:(pred?(inside?14:9):26)),peaks=[];
   for(var dy=-range;dy<=range;dy++)for(var dx=-range;dx<=range;dx++){
-    var s=zncc(rq.g,cq.g,rq.w,rq.h,ax,ay,px+dx,py+dy,3);
+    var s=Math.abs(matchScale-1)>.06?
+      znccScaled(rq.g,cq.g,rq.w,rq.h,ax,ay,px+dx,py+dy,3,matchScale):
+      zncc(rq.g,cq.g,rq.w,rq.h,ax,ay,px+dx,py+dy,3);
     if(s>.16)peaks.push({s:s,x:px+dx,y:py+dy});
   }
   peaks.sort(function(a,b){return b.s-a.s;});
@@ -561,13 +599,17 @@ function matchDot(ref,cur,W,H,p,rh,ch,rq,cq,inside,pred){
   for(z=0;z<coarse.length;z++){
     var hx=coarse[z].x*2,hy=coarse[z].y*2,halfBest=-2,hbx=hx,hby=hy;
     for(dy=-4;dy<=4;dy++)for(dx=-4;dx<=4;dx++){
-      var hs=zncc(rh.g,ch.g,rh.w,rh.h,ahx,ahy,hx+dx,hy+dy,4);
+      var hs=Math.abs(matchScale-1)>.06?
+        znccScaled(rh.g,ch.g,rh.w,rh.h,ahx,ahy,hx+dx,hy+dy,4,matchScale):
+        zncc(rh.g,ch.g,rh.w,rh.h,ahx,ahy,hx+dx,hy+dy,4);
       if(hs>halfBest){halfBest=hs;hbx=hx+dx;hby=hy+dy;}
     }
     if(halfBest<.28)continue;
     var fx=hbx*2,fy=hby*2,fullBest=-2,rx=fx,ry=fy;
     for(dy=-3;dy<=3;dy++)for(dx=-3;dx<=3;dx++){
-      var ss=zncc(ref,cur,W,H,p.x,p.y,fx+dx,fy+dy,6);
+      var ss=Math.abs(matchScale-1)>.06?
+        znccScaled(ref,cur,W,H,p.x,p.y,fx+dx,fy+dy,6,matchScale):
+        zncc(ref,cur,W,H,p.x,p.y,fx+dx,fy+dy,6);
       if(ss>fullBest){fullBest=ss;rx=fx+dx;ry=fy+dy;}
     }
     if(fullBest>.34)answers.push({x:p.x,y:p.y,u:rx,v:ry,corr:fullBest});
@@ -577,11 +619,11 @@ function matchDot(ref,cur,W,H,p,rh,ch,rq,cq,inside,pred){
   answers.sort(function(a,b){return b.corr-a.corr;});
   return inside?answers.slice(0,4):(answers[0]||null);
 }
-function trackDots(ref,cur,W,H,pts,inside,pred){
+function trackDots(ref,cur,W,H,pts,inside,pred,matchScale,tight){
   var rh=halfGray(ref,W,H),ch=halfGray(cur,W,H);
   var rq=halfGray(rh.g,rh.w,rh.h),cq=halfGray(ch.g,ch.w,ch.h),out=[];
   for(var i=0;i<pts.length;i++){
-    var m=matchDot(ref,cur,W,H,pts[i],rh,ch,rq,cq,inside,pred);
+    var m=matchDot(ref,cur,W,H,pts[i],rh,ch,rq,cq,inside,pred,matchScale,tight);
     if(inside){for(var j=0;j<m.length;j++){m[j].id=i;out.push(m[j]);}}
     else if(m){m.id=i;out.push(m);}
   }
@@ -672,7 +714,7 @@ function fitAffineWeighted(ps,cx,cy,radius){
   var au=solve3(M,bu),av=solve3(M,bv);if(!au||!av)return null;
   return {A:[au[0],au[1],av[0],av[1]],t:[au[2],av[2]],n:used};
 }
-function localLensField(inPairs,inside,C,W,H){
+function localLensField(inPairs,inside,C,W,H,wide){
   var invC=inv2(C.A);if(!invC)return null;
   var cx=W*.5,cy=H*.5*(370/400),R=Math.min(W,H)*.24;
   var clean=uniqueAffineInliers(inside,inPairs,Math.max(2.2,(inside.rms||1)*2.6));
@@ -683,7 +725,7 @@ function localLensField(inPairs,inside,C,W,H){
     if(nx*nx+ny*ny>.88)continue;
     var px=cx+nx*R*.72,py=cy+ny*R*.72;
     var f=fitAffineWeighted(clean,px,py,radius);if(!f||f.n<7)continue;
-    var L=mul2(invC,f.A),m=matrixToMeasurement(L);
+    var L=mul2(invC,f.A),m=matrixToMeasurement(L,wide===true);
     if(!m.ok||m.signal<MIN_LENS_POWER*.5||m.signal>18)continue;
     m.vec._nodeX=gx;m.vec._nodeY=gy;m.vec._support=f.n;
     vecs.push(m.vec);nodes.push({x:gx,y:gy,n:f.n});
@@ -691,6 +733,78 @@ function localLensField(inPairs,inside,C,W,H){
   if(vecs.length<6)return null;
   var agg=robustVec(vecs);if(!agg)return null;
   return {vec:agg.vec,spread:agg.spread,count:agg.n,nodes:nodes};
+}
+
+/* 고도수 전용 fallback --------------------------------------------------
+   일반 측정은 기존 로직을 그대로 사용한다. 렌즈 안 특징을 잃거나 0D 근처의
+   의심스러운 결과가 나올 때만, 예상 고도수 배율로 특징점의 위치와 패치 크기를
+   먼저 예측한 뒤 다시 추적한다. */
+function highPowerFallback(ref,cur,W,H,C){
+  var invC=inv2(C.A);if(!invC)return null;
+  var cx=W*.5,cy=H*.5*(370/400),g=geom(),R=Math.min(W,H)*.24;
+  /* 고도수에서는 실제 광학중심이 가이드 중심과 조금만 달라도 예측 위치가 크게 빗나간다.
+     그래서 도수 가설 + 중심 위치 가설을 함께 시험한다. 일반 측정에는 사용하지 않는다. */
+  var powers=[-6,-7.5,-9,-10.5,-12,-14,-16,-19,6,7.5,9,10.5,12];
+  var off=R*.12;
+  var centers=[[0,0],[off,0],[-off,0],[0,off],[0,-off]];
+  var hpPts=S.reference.inPts.slice(0,140),best=null;
+  for(var h=0;h<powers.length;h++){
+    var F=powers[h],den=1-F*g.eM;if(den<=.12)continue;
+    var sc=1/den;if(sc<.26||sc>4.8)continue;
+    for(var ci=0;ci<centers.length;ci++){
+      var ox=centers[ci][0],oy=centers[ci][1];
+      var pred=scaledLensPrediction(C,cx+ox,cy+oy,sc);
+      /* 기존 ±6(1/4 해상도)보다 넓게 찾는다. 예측 자체는 이미 scale-aware라
+         일반 추적처럼 매우 넓힐 필요는 없고 ±10이면 중심 오차를 충분히 흡수한다. */
+      var pairs=trackDots(ref,cur,W,H,hpPts,true,pred,sc,10);
+      var inside=fitAffineRobust(pairs);if(!inside||inside.n<9)continue;
+      var L=mul2(invC,inside.A),meas=matrixToMeasurement(L,true);
+      if(!meas.ok||meas.signal<5.0||meas.signal>20)continue;
+      var rx=vecToRx(meas.vec),se=rx.sph+rx.cyl/2;
+      if((F<0&&se>-3.5)||(F>0&&se<3.5))continue;
+      var det=Math.abs(L[0]*L[3]-L[1]*L[2]);
+      var estScale=Math.sqrt(Math.max(1e-9,det));
+      var scaleErr=Math.abs(Math.log(estScale/sc));
+      if(scaleErr>.28)continue;
+      var clean=uniqueAffineInliers(inside,pairs,Math.max(2.4,(inside.rms||1)*2.8));
+      var corrs=clean.map(function(p){return p.corr||0;});
+      var medCorr=median(corrs)||0;
+      if(clean.length<9||medCorr<.27)continue;
+      var centerPenalty=Math.hypot(ox,oy)/(R||1)*.8;
+      var score=clean.length*(.55+medCorr)/(0.9+(inside.rms||0))-scaleErr*8-centerPenalty;
+      if(!best||score>best.score)best={inside:inside,pairs:pairs,L:L,measured:meas,
+        score:score,scale:sc,hypothesis:F,corr:medCorr,count:clean.length,
+        centerX:cx+ox,centerY:cy+oy};
+    }
+  }
+  return best;
+}
+
+/* 안경테가 원 밖 특징을 가리는 순간에는 렌즈/테의 이동이 카메라 이동처럼 보일 수 있다.
+   기존 22px 기준은 유지하되, 그 기준을 넘는 경우에만 훨씬 바깥 배경으로 재검증한다. */
+function affineMotionPx(C,W,H){
+  if(!C)return Infinity;
+  var x=W*.5,y=H*.5;
+  return Math.hypot(C.A[0]*x+C.A[1]*y+C.t[0]-x,
+                    C.A[2]*x+C.A[3]*y+C.t[1]-y);
+}
+function saneBackgroundAffine(C){
+  if(!C)return false;
+  var c1=Math.hypot(C.A[0],C.A[2]),c2=Math.hypot(C.A[1],C.A[3]);
+  if(c1<1e-6||c2<1e-6)return false;
+  var dot=Math.abs((C.A[0]*C.A[1]+C.A[2]*C.A[3])/(c1*c2));
+  var scale=Math.sqrt(Math.abs(C.A[0]*C.A[3]-C.A[1]*C.A[2]));
+  return dot<.48&&scale>=.88&&scale<=1.12;
+}
+function farBackgroundRescue(outPairs,W,H){
+  var cx=W*.5,cy=H*.5*(370/400),R=Math.min(W,H)*.24;
+  var far=outPairs.filter(function(p){
+    var dx=Math.abs(p.x-cx),dy=Math.abs(p.y-cy),rr=Math.hypot(dx,dy)/R;
+    return rr>1.42&&(dx>R*1.12||dy>R*1.02);
+  });
+  if(far.length<10)return null;
+  var F=fitAffineRobust(far);
+  return F&&F.n>=8&&saneBackgroundAffine(F)?F:null;
 }
 
 /* 기준 영상의 특징점을 현재 프레임에서 추적한다.
@@ -710,9 +824,24 @@ analyzeFrame=function(imgData,W,H){
       "렌즈 밖 글자가 흐립니다 — 초점을 맞춰 주세요":
       "배경 특징을 다시 찾는 중입니다 — 휴대폰을 고정해 주세요"};
   }
+  var rawMotion=affineMotionPx(C,W,H);
+  if(rawMotion>AUTO_SAVE_MAX_MOTION){
+    var farC=farBackgroundRescue(outPairs,W,H);
+    if(farC){
+      var farMotion=affineMotionPx(farC,W,H);
+      if(farMotion<rawMotion*.82) C=farC;
+    }
+  }
   S.motion=C;
   var inPairs=trackDots(ref,cur,W,H,S.reference.inPts,true,C);
-  var inside=fitAffineRobust(inPairs);
+  var inside=fitAffineRobust(inPairs),high=null;
+  var invC=inv2(C.A);if(!invC)return {ok:false,why:"illCond"};
+
+  /* 일반 추적이 실패하면 고도수용 scale-aware 추적을 한 번만 시도한다. */
+  if(!inside||inside.n<9){
+    high=highPowerFallback(ref,cur,W,H,C);
+    if(high){inPairs=high.pairs;inside=high.inside;}
+  }
   var matchedIds={};inPairs.forEach(function(p){matchedIds[p.id]=1;});
   var matchedIn=Object.keys(matchedIds).length;
   if(!inside||inside.n<9){
@@ -721,8 +850,17 @@ analyzeFrame=function(imgData,W,H){
       "렌즈 안 글자가 흐립니다 — 반사광을 피하고 초점을 맞춰 주세요":
       "렌즈 안 특징 "+matchedIn+"개 — 렌즈 중앙을 원에 맞춰 주세요"};
   }
-  var invC=inv2(C.A);if(!invC)return {ok:false,why:"illCond"};
   var L=mul2(invC,inside.A);
+
+  /* 반복 글자 오매칭으로 실제 고도수가 0D 근처로 보이는 경우가 있다.
+     일반 결과가 거의 무도수라면 고도수 가설을 검증하고, 충분히 강한 경우에만 교체한다. */
+  var stdMeasure=matrixToMeasurement(L);
+  if(!high&&stdMeasure.ok&&stdMeasure.signal<.80){
+    var challenge=highPowerFallback(ref,cur,W,H,C);
+    if(challenge&&challenge.measured.signal>=5.0){
+      high=challenge;inPairs=high.pairs;inside=high.inside;L=high.L;
+    }
+  }
   var c1=Math.hypot(C.A[0],C.A[2]),c2=Math.hypot(C.A[1],C.A[3]);
   var dot=Math.abs((C.A[0]*C.A[1]+C.A[2]*C.A[3])/(c1*c2));
   var scale=Math.sqrt(Math.abs(C.A[0]*C.A[3]-C.A[1]*C.A[2]));
@@ -731,10 +869,10 @@ analyzeFrame=function(imgData,W,H){
   if(scale<.88||scale>1.12)return {ok:false,why:"moved",message:"기준 촬영 후 휴대폰 위치가 바뀌었습니다 — 같은 거리에서 기준을 다시 잡아 주세요"};
   var ccx=W*.5,ccy=H*.5,mx=C.A[0]*ccx+C.A[1]*ccy+C.t[0]-ccx,
       my=C.A[2]*ccx+C.A[3]*ccy+C.t[1]-ccy;
-  var field=localLensField(inPairs,inside,C,W,H);
+  var field=localLensField(inPairs,inside,C,W,H,!!high);
   return {ok:true,A:L,local:field,score:Math.min(C.n,inside.n),skew:skew,
           outPitchPx:scale,outScale:scale,outCount:C.n,inCount:inside.n,
-          motionPx:Math.hypot(mx,my)};
+          motionPx:Math.hypot(mx,my),highPower:!!high,highHyp:high?high.hypothesis:null};
 };
 
 /* ---------- 강건 집계 (중앙값 + MAD) ---------- */
@@ -911,10 +1049,27 @@ function tick(){
       setBanner("움직임이 큽니다 — 좋은 프레임은 유지 중, 잠시만 안정시켜 주세요","warn");
       return;
     }
-    var measured=matrixToMeasurement(r.A);
-    if(r.local&&r.local.count>=6){
+    var measured=matrixToMeasurement(r.A,r.highPower===true);
+    if(r.local&&r.local.count>=6&&measured.ok){
       var lr=vecToRx(r.local.vec);
-      measured={ok:true,vec:r.local.vec,signal:Math.max(Math.abs(lr.sph),Math.abs(lr.sph+lr.cyl)),local:true};
+      if(!r.highPower){
+        /* 일반 도수는 기존 234 동작을 그대로 유지한다. */
+        measured={ok:true,vec:r.local.vec,signal:Math.max(Math.abs(lr.sph),Math.abs(lr.sph+lr.cyl)),local:true};
+      }else{
+        /* 고도수에서는 GLOBAL이 큰 도수/부호를 책임지고, LOCAL은 신뢰할 수 있을 때만
+           CYL/AXIS(J0/J45)를 보조한다. 잘못된 0D local이 -10D global을 덮어쓰지 못한다. */
+        var gr=vecToRx(measured.vec),gSE=gr.sph+gr.cyl/2,lSE=lr.sph+lr.cyl/2;
+        var sameSign=(gSE===0||lSE===0)||(gSE*lSE>0);
+        var localOK=sameSign&&Math.abs(lSE)>=3.5&&Math.abs(lSE-gSE)<=2.5&&
+                    Math.abs(lr.cyl)<=6&&r.local.spread<1.25;
+        if(localOK){
+          var gv=measured.vec,lv=r.local.vec;
+          var hv={M:gv.M,J0:lv.J0,J45:lv.J45};
+          var hr=vecToRx(hv);
+          measured={ok:true,vec:hv,signal:Math.max(Math.abs(hr.sph),Math.abs(hr.sph+hr.cyl)),
+                    local:true,highHybrid:true};
+        }
+      }
     }
     if(!measured.ok){resetAutoSequence();S.samples=[];renderLive(false);setBanner(WHY[measured.why]||"측정 범위를 벗어났습니다","bad");return;}
     if(measured.signal<MIN_LENS_POWER){S.noLens=(S.noLens||0)+1;resetAutoSequence();S.samples=[];renderLive(false);
@@ -923,6 +1078,7 @@ function tick(){
     if(Date.now()<S.autoSaveCooldownUntil){resetAutoSequence();S.samples=[];renderLive(false);setBanner("다음 렌즈를 원 안에 맞춰 주세요","ok");return;}
     measured.vec._skew=r.skew;measured.vec._localCount=r.local?r.local.count:0;
     measured.vec._localSpread=r.local?r.local.spread:9;measured.vec._motion=r.motionPx;
+    measured.vec._highPower=r.highPower===true;
     /* 전체 통계에는 유효 프레임을 계속 쌓되, 자동 저장용 최근 표본은
        이전 값과 너무 다른 순간 프레임을 조용히 제외한다. */
     var accepted=addAutoSample(measured.vec,r.skew);
@@ -992,6 +1148,7 @@ function renderLive(gotOne){
   var tiltMsg="";
   if(S.last&&S.last.local&&S.last.local.spread>.45) tiltMsg=" · 국소 차이 큼";
   if(S.last&&S.last.motionPx>5) tiltMsg+=" · 흔들림 보정 중";
+  if(S.last&&S.last.highPower) tiltMsg+=" · 고도수 추적";
   var canAuto=gotOne===true&&S.stream&&S.reference&&!S.refMode&&
     Date.now()>=S.autoSaveCooldownUntil;
   if(auto.ready&&canAuto){
@@ -1031,11 +1188,24 @@ function distanceWeight(q){
   var coverage=.65+Math.min(1.1,(q.localCount||0)/18);
   return stability*coverage;
 }
+function vectorPower(v){
+  var r=vecToRx(v);return Math.max(Math.abs(r.sph),Math.abs(r.sph+r.cyl));
+}
 function combineDistances(eye){
   var a=S.distanceData[0][eye],b=S.distanceData[1][eye];if(!a||!b)return null;
   var qa=S.qualityData[0][eye],qb=S.qualityData[1][eye],wa=distanceWeight(qa),wb=distanceWeight(qb);
-  var vec={M:(a.M*wa+b.M*wb)/(wa+wb),J0:(a.J0*wa+b.J0*wb)/(wa+wb),J45:(a.J45*wa+b.J45*wb)/(wa+wb)};
+  var pa=vectorPower(a),pb=vectorPower(b);
   var gap=vecStep(a,b),powerGap=Math.sqrt(Math.pow(a.M-b.M,2)+Math.pow(a.J0-b.J0,2)+Math.pow(a.J45-b.J45,2));
+  /* 한 거리는 고도수인데 다른 거리가 0D 근처로 무너진 경우 평균해서 중간 도수를 만들지 않는다. */
+  if(powerGap>3.0&&Math.max(pa,pb)>=6&&Math.min(pa,pb)<2.5){
+    var chosen=pa>pb?a:b;
+    return {vec:{M:chosen.M,J0:chosen.J0,J45:chosen.J45},gap:gap,powerGap:powerGap,qa:qa,qb:qb,
+            excluded:pa>pb?1:0};
+  }
+  /* 고도수에서는 변형이 덜 극단적인 21cm를 주측정으로 조금 더 신뢰한다. */
+  if(Math.max(pa,pb)>=8)wa*=2.2;
+  else if(Math.max(pa,pb)>=6)wa*=1.55;
+  var vec={M:(a.M*wa+b.M*wb)/(wa+wb),J0:(a.J0*wa+b.J0*wb)/(wa+wb),J45:(a.J45*wa+b.J45*wb)/(wa+wb)};
   return {vec:vec,gap:gap,powerGap:powerGap,qa:qa,qb:qb};
 }
 function confidenceOf(m){
