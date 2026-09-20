@@ -741,70 +741,33 @@ function localLensField(inPairs,inside,C,W,H,wide){
    먼저 예측한 뒤 다시 추적한다. */
 function highPowerFallback(ref,cur,W,H,C){
   var invC=inv2(C.A);if(!invC)return null;
-  var cx=W*.5,cy=H*.5*(370/400),g=geom(),R=Math.min(W,H)*.24;
-  /* 고도수에서는 실제 광학중심이 가이드 중심과 조금만 달라도 예측 위치가 크게 빗나간다.
-     그래서 도수 가설 + 중심 위치 가설을 함께 시험한다. 일반 측정에는 사용하지 않는다. */
-  var powers=[-6,-7.5,-9,-10.5,-12,-14,-16,-19,6,7.5,9,10.5,12];
-  var off=R*.12;
-  var centers=[[0,0],[off,0],[-off,0],[0,off],[0,-off]];
-  var hpPts=S.reference.inPts.slice(0,140),best=null;
+  var cx=W*.5,cy=H*.5*(370/400),g=geom();
+  /* 촘촘하게 모든 도수를 훑지 않고 대표 고도수만 사용한다. 최종 값은 실제 affine에서 계산한다. */
+  var powers=[-6.5,-8.5,-10.5,-13,-16,-19,6.5,8.5,10.5,12.5];
+  var best=null;
   for(var h=0;h<powers.length;h++){
     var F=powers[h],den=1-F*g.eM;if(den<=.12)continue;
     var sc=1/den;if(sc<.26||sc>4.8)continue;
-    for(var ci=0;ci<centers.length;ci++){
-      var ox=centers[ci][0],oy=centers[ci][1];
-      var pred=scaledLensPrediction(C,cx+ox,cy+oy,sc);
-      /* 기존 ±6(1/4 해상도)보다 넓게 찾는다. 예측 자체는 이미 scale-aware라
-         일반 추적처럼 매우 넓힐 필요는 없고 ±10이면 중심 오차를 충분히 흡수한다. */
-      var pairs=trackDots(ref,cur,W,H,hpPts,true,pred,sc,10);
-      var inside=fitAffineRobust(pairs);if(!inside||inside.n<9)continue;
-      var L=mul2(invC,inside.A),meas=matrixToMeasurement(L,true);
-      if(!meas.ok||meas.signal<5.0||meas.signal>20)continue;
-      var rx=vecToRx(meas.vec),se=rx.sph+rx.cyl/2;
-      if((F<0&&se>-3.5)||(F>0&&se<3.5))continue;
-      var det=Math.abs(L[0]*L[3]-L[1]*L[2]);
-      var estScale=Math.sqrt(Math.max(1e-9,det));
-      var scaleErr=Math.abs(Math.log(estScale/sc));
-      if(scaleErr>.28)continue;
-      var clean=uniqueAffineInliers(inside,pairs,Math.max(2.4,(inside.rms||1)*2.8));
-      var corrs=clean.map(function(p){return p.corr||0;});
-      var medCorr=median(corrs)||0;
-      if(clean.length<9||medCorr<.27)continue;
-      var centerPenalty=Math.hypot(ox,oy)/(R||1)*.8;
-      var score=clean.length*(.55+medCorr)/(0.9+(inside.rms||0))-scaleErr*8-centerPenalty;
-      if(!best||score>best.score)best={inside:inside,pairs:pairs,L:L,measured:meas,
-        score:score,scale:sc,hypothesis:F,corr:medCorr,count:clean.length,
-        centerX:cx+ox,centerY:cy+oy};
-    }
+    var pred=scaledLensPrediction(C,cx,cy,sc);
+    var pairs=trackDots(ref,cur,W,H,S.reference.inPts,true,pred,sc,10);
+    var inside=fitAffineRobust(pairs);if(!inside||inside.n<9)continue;
+    var L=mul2(invC,inside.A),meas=matrixToMeasurement(L,true);
+    if(!meas.ok||meas.signal<5.0||meas.signal>20)continue;
+    var rx=vecToRx(meas.vec),se=rx.sph+rx.cyl/2;
+    if((F<0&&se>-3.5)||(F>0&&se<3.5))continue;
+    var det=Math.abs(L[0]*L[3]-L[1]*L[2]);
+    var estScale=Math.sqrt(Math.max(1e-9,det));
+    var scaleErr=Math.abs(Math.log(estScale/sc));
+    if(scaleErr>.28)continue;
+    var clean=uniqueAffineInliers(inside,pairs,Math.max(2.2,(inside.rms||1)*2.6));
+    var corrs=clean.map(function(p){return p.corr||0;});
+    var medCorr=median(corrs)||0;
+    if(clean.length<9||medCorr<.27)continue;
+    var score=clean.length*(.55+medCorr)/(0.9+(inside.rms||0))-scaleErr*8;
+    if(!best||score>best.score)best={inside:inside,pairs:pairs,L:L,measured:meas,
+      score:score,scale:sc,hypothesis:F,corr:medCorr,count:clean.length};
   }
   return best;
-}
-
-/* 안경테가 원 밖 특징을 가리는 순간에는 렌즈/테의 이동이 카메라 이동처럼 보일 수 있다.
-   기존 22px 기준은 유지하되, 그 기준을 넘는 경우에만 훨씬 바깥 배경으로 재검증한다. */
-function affineMotionPx(C,W,H){
-  if(!C)return Infinity;
-  var x=W*.5,y=H*.5;
-  return Math.hypot(C.A[0]*x+C.A[1]*y+C.t[0]-x,
-                    C.A[2]*x+C.A[3]*y+C.t[1]-y);
-}
-function saneBackgroundAffine(C){
-  if(!C)return false;
-  var c1=Math.hypot(C.A[0],C.A[2]),c2=Math.hypot(C.A[1],C.A[3]);
-  if(c1<1e-6||c2<1e-6)return false;
-  var dot=Math.abs((C.A[0]*C.A[1]+C.A[2]*C.A[3])/(c1*c2));
-  var scale=Math.sqrt(Math.abs(C.A[0]*C.A[3]-C.A[1]*C.A[2]));
-  return dot<.48&&scale>=.88&&scale<=1.12;
-}
-function farBackgroundRescue(outPairs,W,H){
-  var cx=W*.5,cy=H*.5*(370/400),R=Math.min(W,H)*.24;
-  var far=outPairs.filter(function(p){
-    var dx=Math.abs(p.x-cx),dy=Math.abs(p.y-cy),rr=Math.hypot(dx,dy)/R;
-    return rr>1.42&&(dx>R*1.12||dy>R*1.02);
-  });
-  if(far.length<10)return null;
-  var F=fitAffineRobust(far);
-  return F&&F.n>=8&&saneBackgroundAffine(F)?F:null;
 }
 
 /* 기준 영상의 특징점을 현재 프레임에서 추적한다.
@@ -823,14 +786,6 @@ analyzeFrame=function(imgData,W,H){
     return {ok:false,why:"noDotsOut",message:outSharp<.42?
       "렌즈 밖 글자가 흐립니다 — 초점을 맞춰 주세요":
       "배경 특징을 다시 찾는 중입니다 — 휴대폰을 고정해 주세요"};
-  }
-  var rawMotion=affineMotionPx(C,W,H);
-  if(rawMotion>AUTO_SAVE_MAX_MOTION){
-    var farC=farBackgroundRescue(outPairs,W,H);
-    if(farC){
-      var farMotion=affineMotionPx(farC,W,H);
-      if(farMotion<rawMotion*.82) C=farC;
-    }
   }
   S.motion=C;
   var inPairs=trackDots(ref,cur,W,H,S.reference.inPts,true,C);
@@ -1050,24 +1005,21 @@ function tick(){
       return;
     }
     var measured=matrixToMeasurement(r.A,r.highPower===true);
-    if(r.local&&r.local.count>=6&&measured.ok){
+    if(r.local&&r.local.count>=6){
       var lr=vecToRx(r.local.vec);
       if(!r.highPower){
-        /* 일반 도수는 기존 234 동작을 그대로 유지한다. */
+        /* 일반 도수는 기존 234 동작을 그대로 유지 */
         measured={ok:true,vec:r.local.vec,signal:Math.max(Math.abs(lr.sph),Math.abs(lr.sph+lr.cyl)),local:true};
-      }else{
-        /* 고도수에서는 GLOBAL이 큰 도수/부호를 책임지고, LOCAL은 신뢰할 수 있을 때만
-           CYL/AXIS(J0/J45)를 보조한다. 잘못된 0D local이 -10D global을 덮어쓰지 못한다. */
+      }else if(measured.ok){
+        /* 고도수 fallback에서만 보호: local이 global과 같은 부호/크기일 때만 CYL/AXIS 보조 */
         var gr=vecToRx(measured.vec),gSE=gr.sph+gr.cyl/2,lSE=lr.sph+lr.cyl/2;
-        var sameSign=(gSE===0||lSE===0)||(gSE*lSE>0);
-        var localOK=sameSign&&Math.abs(lSE)>=3.5&&Math.abs(lSE-gSE)<=2.5&&
-                    Math.abs(lr.cyl)<=6&&r.local.spread<1.25;
+        var sameSign=(Math.abs(gSE)<.5||Math.abs(lSE)<.5)?false:(gSE*lSE>0);
+        var localOK=sameSign&&Math.abs(lSE)>=3.5&&Math.abs(lSE-gSE)<=3.0&&
+                    Math.abs(lr.cyl)<=6&&(r.local.spread||0)<1.35;
         if(localOK){
-          var gv=measured.vec,lv=r.local.vec;
-          var hv={M:gv.M,J0:lv.J0,J45:lv.J45};
+          var hv={M:measured.vec.M,J0:r.local.vec.J0,J45:r.local.vec.J45};
           var hr=vecToRx(hv);
-          measured={ok:true,vec:hv,signal:Math.max(Math.abs(hr.sph),Math.abs(hr.sph+hr.cyl)),
-                    local:true,highHybrid:true};
+          measured={ok:true,vec:hv,signal:Math.max(Math.abs(hr.sph),Math.abs(hr.sph+hr.cyl)),local:true,highHybrid:true};
         }
       }
     }
